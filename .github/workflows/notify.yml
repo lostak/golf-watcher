@@ -1,15 +1,16 @@
 name: notify
 # Relay: Claude's scheduled tasks run this to post a message to Bradley's Slack DM and a Discord channel. Secrets stay here.
 #   gh workflow run notify.yml -R lostak/golf-watcher --ref main -f channel=general -f text="$(cat /tmp/msg.txt)"
-# channel=golf → DISCORD_WEBHOOK_URL (this repo's golf channel); general → DISCORD_WEBHOOK_GENERAL (everything that has no
-# channel of its own). Picks go through lostak/my-life; powder and game prices through their own repos.
+# channel=golf → Slack DM + this repo's Discord golf channel. ANY other channel (general, none, …) → Slack DM only:
+# the shared Discord channels never get personal content. Picks post through lostak/my-life; powder and game prices
+# through their own repos.
 # channel=none posts to Slack only; slack=false posts to Discord only (for shared channels where the wording must not be personal).
 # Powder and game-price messages use the same relay in lostak/powder-report and lostak/game-price-watcher.
 on:
   workflow_dispatch:
     inputs:
       text: { description: 'Message (Slack markdown: *bold*; newlines allowed)', required: true, type: string }
-      channel: { description: 'golf | general | none (Slack only)', required: false, default: 'general', type: string }
+      channel: { description: 'golf (Slack + Discord golf) | anything else = Slack only', required: false, default: 'none', type: string }
       slack: { description: 'Also post to Slack', required: false, default: true, type: boolean }
 permissions: {}
 jobs:
@@ -23,12 +24,10 @@ jobs:
           SLACK_ON: '${{ inputs.slack }}'
           SLACK: '${{ secrets.SLACK_WEBHOOK_URL }}'
           DISCORD_WEBHOOK_GOLF: '${{ secrets.DISCORD_WEBHOOK_URL }}'
-          DISCORD_WEBHOOK_GENERAL: '${{ secrets.DISCORD_WEBHOOK_GENERAL }}'
         run: |
           node -e '
             const e = process.env, text = e.TEXT || "";
-            const ch = (e.CHANNEL || "general").toUpperCase().replace(/[^A-Z0-9]/g, "_");
-            const discord = ch === "NONE" ? null : (e["DISCORD_WEBHOOK_" + ch] || e.DISCORD_WEBHOOK_GENERAL);
+            const discord = (e.CHANNEL || "").toLowerCase() === "golf" ? e.DISCORD_WEBHOOK_GOLF : null;   // everything else is Slack-only
             const slack = e.SLACK_ON === "false" ? null : e.SLACK;
             const post = async (url, body) => { if (!url) return "skipped"; const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.ok ? "ok" : "failed " + r.status; };
             (async () => {
