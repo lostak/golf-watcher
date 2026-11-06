@@ -226,6 +226,15 @@ async function readForeUp(browser, site, dates) {
   await p.close(); return found;
 }
 
+// Post to Slack (SLACK_WEBHOOK_URL) and Discord (DISCORD_WEBHOOK_URL) when set. Slack *bold* becomes Discord **bold**.
+async function notify(text) {
+  const slack = process.env.SLACK_WEBHOOK_URL, discord = process.env.DISCORD_WEBHOOK_URL;
+  if (!slack && !discord) throw new Error('SLACK_WEBHOOK_URL / DISCORD_WEBHOOK_URL not set');
+  const post = async (url, body, name) => { if (!url) return; const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(name + ' post failed ' + r.status); };
+  await post(slack, { text }, 'Slack');
+  await post(discord, { content: text.replace(/\*([^*\n]+)\*/g, '**$1**').slice(0, 1990) }, 'Discord');
+}
+
 async function launch() {
   try { return await chromium.launch({ channel: 'chrome' }); }   // GitHub runners ship Google Chrome: no download needed
   catch (e) { dbg('system Chrome not available (' + e.message.split('\n')[0] + '), using Playwright Chromium'); return chromium.launch(); }
@@ -270,15 +279,10 @@ async function launch() {
       msg += `\n…and ${matches.length - MAX_LINES} more: ` + Object.entries(byDate).map(([d, n]) => `${niceDate(d)} ${n} more – https://www.golfnow.com/tee-times/search#facilitytype=GolfCourse&date=${gnDate(d)}&longitude=${CENTER.lng}&latitude=${CENTER.lat}&radius=${RADIUS}&players=${playersByDate[d]}`).join('; ');
     }
     msg += `\nBook directly on the course's site. Pick the date on the page.`;
-    const url = process.env.SLACK_WEBHOOK_URL;
-    if (!url) throw new Error('SLACK_WEBHOOK_URL not set');
-    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: msg }) });
-    if (!r.ok) throw new Error('Slack post failed ' + r.status);
+    await notify(msg);
     for (const m of matches) seen[m.key] = Date.now();
   }
-  if (errors.length && process.env.SLACK_WEBHOOK_URL && !DRY && !all.length) {
-    await fetch(process.env.SLACK_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: '⚠️ Golf watcher could not read any tee sheets: ' + errors.join('; ') }) });
-  }
+  if (errors.length && !DRY && !all.length) await notify('⚠️ Golf watcher could not read any tee sheets: ' + errors.join('; '));
   fs.mkdirSync('state', { recursive: true });
   fs.writeFileSync(STATE, JSON.stringify(seen, null, 1));
 })().catch(e => { console.error(e); process.exit(1); });

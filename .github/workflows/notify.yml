@@ -1,0 +1,25 @@
+name: notify
+# Relay: anything (including Claude's scheduled tasks) can run this workflow to post a message to Bradley's
+# Slack DM and Discord channel. Secrets stay here. Usage:
+#   gh workflow run notify.yml -R lostak/golf-watcher -f text="🚨 *Something urgent*"$'\n'"details…"
+on:
+  workflow_dispatch:
+    inputs:
+      text: { description: 'Message (Slack markdown: *bold*; newlines allowed)', required: true, type: string }
+permissions: {}
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env: { TEXT: '${{ inputs.text }}', SLACK: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD: '${{ secrets.DISCORD_WEBHOOK_URL }}' }
+        run: |
+          node -e '
+            const text = process.env.TEXT || "";
+            const post = async (url, body) => { if (!url) return "skipped"; const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.ok ? "ok" : "failed " + r.status; };
+            (async () => {
+              const s = await post(process.env.SLACK, { text });
+              const d = await post(process.env.DISCORD, { content: text.replace(/\*([^*\n]+)\*/g, "**$1**").slice(0, 1990) });
+              console.log("slack:", s, "discord:", d);
+              if (s.startsWith("failed") || d.startsWith("failed")) process.exit(1);
+            })();'

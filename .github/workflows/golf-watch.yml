@@ -39,7 +39,7 @@ jobs:
       # No browser download: the runner's own Google Chrome is used (chromium.launch({ channel: 'chrome' })).
       - if: steps.gate.outputs.run == 'yes'
         run: node watch.js ${{ inputs.dry && '--dry' || '' }} ${{ inputs.debug && '--debug' || '' }}
-        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}' }
+        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}' }
       - name: Save seen list
         if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
