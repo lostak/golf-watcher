@@ -40,4 +40,4 @@ jobs:
         if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
-          git add state/seen.json && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list" && git pull --rebase -q && git push))
+          git add state/seen.json && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list" && git pull --rebase -q -X theirs && git push))
