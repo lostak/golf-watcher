@@ -103,7 +103,7 @@ async function readMemberSports(browser, site, dates) {
 }
 
 // ---------- GolfNow: every course within the radius ----------
-// Aurora's five city courses: GolfNow's area search leaves them out, so they're added by facility id
+// Aurora's five city courses (plus Heather Ridge): GolfNow's area search leaves them out, so they're added by facility id
 // (the same ids TeeOff uses). GolfNow only gets part of Aurora's tee sheet, so some open times won't show.
 const GN_EXTRA = [
   [17876, 'Springhill Golf Course', 'springhill-golf-course'],
@@ -111,6 +111,7 @@ const GN_EXTRA = [
   [17878, 'Aurora Hills Golf Course', 'aurora-hills-golf-course'],
   [17879, 'Murphy Creek Golf Course', 'murphy-creek-golf-course'],
   [17880, 'Meadow Hills Golf Course', 'meadow-hills-golf-course'],
+  [9459, 'Heather Ridge Golf Course', 'heather-ridge-golf-course'], // sometimes missing from the area search
 ].map(([id, name, s]) => ({ id, name, slug: `${id}-${s}` }));
 // 1) the area-search page's own "courses-near-me" call gives the list of facilities (id, name, location);
 // 2) a facility page's own "tee-time-results" call gives the request template, replayed per facility and date.
