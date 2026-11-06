@@ -3,12 +3,14 @@ name: notify
 #   gh workflow run notify.yml -R lostak/golf-watcher --ref main -f channel=picks -f text="$(cat /tmp/msg.txt)"
 # channel=golf → DISCORD_WEBHOOK_URL (this repo's golf channel); any other channel → the secret DISCORD_WEBHOOK_<CHANNEL>
 # (picks → DISCORD_WEBHOOK_PICKS, general → DISCORD_WEBHOOK_GENERAL); a channel with no secret falls back to GENERAL.
+# channel=none posts to Slack only; slack=false posts to Discord only (for shared channels where the wording must not be personal).
 # Powder and game-price messages use the same relay in lostak/powder-report and lostak/game-price-watcher.
 on:
   workflow_dispatch:
     inputs:
       text: { description: 'Message (Slack markdown: *bold*; newlines allowed)', required: true, type: string }
-      channel: { description: 'golf | picks | general', required: false, default: 'general', type: string }
+      channel: { description: 'golf | picks | general | none (Slack only)', required: false, default: 'general', type: string }
+      slack: { description: 'Also post to Slack', required: false, default: true, type: boolean }
 permissions: {}
 jobs:
   send:
@@ -18,6 +20,7 @@ jobs:
       - env:
           TEXT: '${{ inputs.text }}'
           CHANNEL: '${{ inputs.channel }}'
+          SLACK_ON: '${{ inputs.slack }}'
           SLACK: '${{ secrets.SLACK_WEBHOOK_URL }}'
           DISCORD_WEBHOOK_GOLF: '${{ secrets.DISCORD_WEBHOOK_URL }}'
           DISCORD_WEBHOOK_PICKS: '${{ secrets.DISCORD_WEBHOOK_PICKS }}'
@@ -26,10 +29,11 @@ jobs:
           node -e '
             const e = process.env, text = e.TEXT || "";
             const ch = (e.CHANNEL || "general").toUpperCase().replace(/[^A-Z0-9]/g, "_");
-            const discord = e["DISCORD_WEBHOOK_" + ch] || e.DISCORD_WEBHOOK_GENERAL;
+            const discord = ch === "NONE" ? null : (e["DISCORD_WEBHOOK_" + ch] || e.DISCORD_WEBHOOK_GENERAL);
+            const slack = e.SLACK_ON === "false" ? null : e.SLACK;
             const post = async (url, body) => { if (!url) return "skipped"; const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.ok ? "ok" : "failed " + r.status; };
             (async () => {
-              const s = await post(e.SLACK, { text });
+              const s = await post(slack, { text });
               const d = await post(discord, { content: text.replace(/\*([^*\n]+)\*/g, "**$1**").slice(0, 1990) });
               console.log("channel:", e.CHANNEL, "slack:", s, "discord:", d);
               if (s.startsWith("failed") || d.startsWith("failed")) process.exit(1);
