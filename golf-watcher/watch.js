@@ -103,6 +103,13 @@ async function readMemberSports(browser, site, dates) {
 }
 
 // ---------- GolfNow: every course within the radius ----------
+const GN_EXTRA = [
+  { id: 1504170, name: 'Murphy Creek Golf Course', slug: '1504170-murphy-creek-golf-course' },
+  { id: 1050557, name: 'Saddle Rock Golf Course', slug: '1050557-saddle-rock-golf-course' },
+  { id: 1027964, name: 'Meadow Hills Golf Course', slug: '1027964-meadow-hills-golf-course' },
+  { id: 1027880, name: 'Aurora Hills Golf Course', slug: '1027880-aurora-hills-golf-course' },
+  { id: 1028001, name: 'Springhill Golf Course', slug: '1028001-springhill-golf-course' },
+];
 // 1) the area-search page's own "courses-near-me" call gives the list of facilities (id, name, location);
 // 2) a facility page's own "tee-time-results" call gives the request template, replayed per facility and date.
 function walk(x, fn, depth = 0) { if (!x || typeof x !== 'object' || depth > 6) return; fn(x); for (const v of Object.values(x)) walk(v, fn, depth + 1); }
@@ -151,6 +158,8 @@ async function readGolfNow(browser, dates, playersByDate) {
     const lat = o.latitude || (o.address && o.address.latitude) || (o.facility && o.facility.latitude), lng = o.longitude || (o.address && o.address.longitude) || (o.facility && o.facility.longitude);
     if (id && name && typeof name === 'string' && !facs.has(id)) facs.set(id, { id, name, slug: o.seoFriendlyName || (o.facility && o.facility.seoFriendlyName) || id, lat, lng });
   });
+  // Aurora's city courses don't come back from the area search, so add them by facility id.
+  for (const f of GN_EXTRA) if (![...facs.values()].some(x => x.id === f.id)) facs.set(f.id, f);
   let list = [...facs.values()].filter(f => wanted(f.name));
   if (list.some(f => f.lat && f.lng)) list = list.filter(f => !(f.lat && f.lng) || miles(CENTER, f) <= RADIUS + 1);
   log(`GolfNow: ${list.length} courses within ${RADIUS} mi: ${list.map(f => f.name).sort().join(', ') || '(none)'}`);
