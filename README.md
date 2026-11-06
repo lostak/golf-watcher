@@ -8,3 +8,10 @@ Every 5 minutes (5 AM–10 PM Denver), a GitHub Actions job reads public tee she
 - **Needs** the repo secret `SLACK_WEBHOOK_URL` (an incoming webhook to your own Slack DM).
 
 This repo is public so Actions minutes are free. Part of [My Life](https://github.com/lostak/my-life) (private).
+
+## Discord commands and daily report
+Post in the Discord golf channel (a bot reads it every 5 minutes):
+`watch Sat 7-11 for 4` · `watch Sat and Sun morning for 2 at Murphy Creek, Meadow Hills` · `tee time Nov 14 7:30-10 for 3 at Wellshire` · `stop Sat` · `stop all` · `list`.
+The bot replies in the channel and the watcher starts checking within a few minutes. With nothing being watched,
+a daily report (7:15 AM) lists the earliest daylight tee time per course for today, tomorrow and the weekend.
+Secrets for this: `DISCORD_BOT_TOKEN`, `DISCORD_CHANNEL_ID` (the golf channel), `DISCORD_WEBHOOK_URL`.

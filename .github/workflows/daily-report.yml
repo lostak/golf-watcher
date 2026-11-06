@@ -1,0 +1,33 @@
+name: daily-report
+# Once a day (7:15 AM Denver): post what's open today, tomorrow and this weekend, even when nothing is being watched.
+on:
+  schedule:
+    - cron: '15 13,14 * * *'   # 7:15 AM MDT and 7:15 AM MST; the gate keeps only the right one
+  workflow_dispatch:
+    inputs:
+      dry: { description: 'Dry run (print only)', type: boolean, default: false }
+permissions: { contents: write }
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - uses: actions/checkout@v4
+      - id: gate
+        env: { EVENT: '${{ github.event_name }}' }
+        run: |
+          h=$((10#$(TZ=America/Denver date +%H)))
+          if [ "$EVENT" = "schedule" ] && [ "$h" != "7" ]; then echo "run=no" >> "$GITHUB_OUTPUT"; else echo "run=yes" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.gate.outputs.run == 'yes'
+        uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - if: steps.gate.outputs.run == 'yes'
+        run: npm install --no-audit --no-fund
+      - if: steps.gate.outputs.run == 'yes'
+        run: node watch.js --report ${{ inputs.dry && '--dry' || '' }}
+        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}' }
+      - if: steps.gate.outputs.run == 'yes' && !inputs.dry
+        run: |
+          git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
+          git add state/ && (git diff --cached --quiet || (git commit -m "golf watcher: daily report" && git pull --rebase -q && git push))

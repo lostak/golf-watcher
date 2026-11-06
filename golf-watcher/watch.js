@@ -11,6 +11,7 @@ const fs = require('fs');
 const cfg = JSON.parse(fs.readFileSync('wants.json', 'utf8'));
 const STATE = 'state/seen.json';
 const DRY = process.argv.includes('--dry');
+const REPORT = process.argv.includes('--report');   // daily report mode: no wants needed; posts a summary of open daylight tee times
 const DEBUG = process.argv.includes('--debug') || process.env.DEBUG === '1';
 const TZ = cfg.timezone || 'America/Denver';
 const CENTER = cfg.center || { lat: 39.7294, lng: -104.8319 }; // Aurora, CO
@@ -67,8 +68,10 @@ function sun(dateStr) {
 
 function windowsFor(date) {
   const { rise, set } = sun(date);
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return cfg.wants.filter(w => w.date === date).map(w => ({
-    from: Math.max(hm(w.from), rise), to: Math.min(hm(w.to), set - 120), players: w.players }));
+    from: Math.max(hm(w.from), rise), to: Math.min(hm(w.to), set - 120), players: w.players,
+    courses: w.courses && w.courses.length ? new RegExp(w.courses.map(esc).join('|'), 'i') : null }));   // optional per-want course filter
 }
 
 // ---------- MemberSports (Denver Golf, Foothills) ----------
@@ -243,9 +246,12 @@ async function launch() {
 (async () => {
   const today = todayDenver();
   const wants = cfg.wants.filter(w => w.date >= today);
-  if (!wants.length) { log('No upcoming wants.'); return; }
-  const dates = [...new Set(wants.map(w => w.date))].sort();
-  const playersByDate = Object.fromEntries(dates.map(d => [d, Math.max(...wants.filter(w => w.date === d).map(w => w.players))]));
+  if (!wants.length && !REPORT) { log('No upcoming wants.'); return; }
+  const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  // report mode looks at today, tomorrow and the coming weekend; watch mode at the wanted days
+  const reportDates = [...new Set([today, addDays(today, 1), ...[1, 2, 3, 4, 5, 6, 7].map(n => addDays(today, n)).filter(d => [0, 6].includes(new Date(d + 'T12:00:00Z').getUTCDay()))])].sort();
+  const dates = REPORT ? reportDates : [...new Set(wants.map(w => w.date))].sort();
+  const playersByDate = Object.fromEntries(dates.map(d => [d, REPORT ? 2 : Math.max(...wants.filter(w => w.date === d).map(w => w.players))]));
   const seen = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {};
   for (const k of Object.keys(seen)) if (k.slice(0, 10) < today) delete seen[k];
   const browser = await launch();
@@ -259,10 +265,32 @@ async function launch() {
   for (const s of FOREUP) { try { all = all.concat(await readForeUp(browser, s, dates)); } catch (e) { errors.push(`${s.label}: ${e.message.slice(0, 100)}`); } }
   await browser.close();
 
+  if (REPORT) {
+    // Daily report: per day, the earliest daylight tee time at each course (2+ spots), sorted by time.
+    const daylight = all.filter(f => { const { rise, set } = sun(f.date); return f.min >= rise && f.min <= set - 120 && f.spots >= 2; });
+    let msg = `⛳ *Golf daily report – ${niceDate(today)}*`;
+    for (const d of dates) {
+      const byCourse = {};
+      for (const f of daylight.filter(f => f.date === d)) if (!byCourse[f.course] || f.min < byCourse[f.course].min) byCourse[f.course] = f;
+      const list = Object.values(byCourse).sort((a, b) => a.min - b.min);
+      const label = d === today ? 'Today' : d === addDays(today, 1) ? 'Tomorrow' : niceDate(d);
+      if (!list.length) { msg += `\n*${label}:* no daylight times (${d < addDays(today, 7) ? 'closed or not released yet' : 'not released yet'})`; continue; }
+      msg += `\n*${label}:* ${list.length} course(s) – ` + list.slice(0, 8).map(f => `${f.course.replace(/ Golf (Course|Club)( - Colorado)?| \(Colorado\)/g, '')} ${fmt(f.min)}${f.price != null ? ' $' + f.price : ''}`).join(', ') + (list.length > 8 ? `, +${list.length - 8} more` : '');
+    }
+    msg += `\nTo watch a day, post in this channel: "watch Sat 7-11 for 4" or "watch Sat 7-11 for 4 at Murphy Creek, Meadow Hills".`;
+    if (errors.length) msg += `\n(couldn't read: ${errors.map(e => e.split(':')[0]).join(', ')})`;
+    log(msg);
+    if (!DRY) await notify(msg);
+    fs.mkdirSync('state', { recursive: true });
+    fs.writeFileSync('state/report.json', JSON.stringify({ date: today, at: new Date().toISOString() }));
+    if (all.length) fs.writeFileSync('state/courses.json', JSON.stringify([...new Set(all.map(f => f.course))].sort(), null, 1));
+    return;
+  }
+
   const matches = [];
   for (const f of all) {
     if (seen[f.key]) continue;
-    const ok = windowsFor(f.date).some(w => f.min >= w.from && f.min <= w.to && f.spots >= w.players);
+    const ok = windowsFor(f.date).some(w => f.min >= w.from && f.min <= w.to && f.spots >= w.players && (!w.courses || w.courses.test(f.course)));
     if (ok) matches.push(f);
   }
   matches.sort((a, b) => a.date.localeCompare(b.date) || a.min - b.min);
@@ -285,4 +313,5 @@ async function launch() {
   if (errors.length && !DRY && !all.length) await notify('⚠️ Golf watcher could not read any tee sheets: ' + errors.join('; '));
   fs.mkdirSync('state', { recursive: true });
   fs.writeFileSync(STATE, JSON.stringify(seen, null, 1));
+  if (all.length) fs.writeFileSync('state/courses.json', JSON.stringify([...new Set(all.map(f => f.course))].sort(), null, 1));   // course names, for the Discord command parser
 })().catch(e => { console.error(e); process.exit(1); });
