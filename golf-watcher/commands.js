@@ -27,12 +27,12 @@ const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', '
 function parseDates(text) {
   const t = today(), out = [];
   let m;
-  const re = /\b(today|tomorrow|(?:this |next )?(sun|mon|tue|wed|thu|fri|sat)[a-z]*|(\d{4})-(\d{2})-(\d{2})|(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th)? (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*)\b/gi;
+  const re = /\b(today|tomorrow|(?:this |next )?(sun(?:day)?|mon(?:day)?|tue(?:s|sday)?|wed(?:s|nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?)|(\d{4})-(\d{2})-(\d{2})|(\d{1,2})\/(\d{1,2})(?:\/\d{2,4})?|(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th)? (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*)\b/gi;
   while ((m = re.exec(text))) {
     const w = m[1].toLowerCase();
     if (w === 'today') out.push(t);
     else if (w === 'tomorrow') out.push(addDays(t, 1));
-    else if (m[2]) { const want = DAYS.findIndex(d => d.startsWith(m[2].toLowerCase())); let d = t; for (let i = 0; i < 7; i++, d = addDays(d, 1)) if (dow(d) === want) break; if (/^next /.test(w) && d === t) d = addDays(d, 7); out.push(d); }
+    else if (m[2]) { const want = DAYS.findIndex(d => d.startsWith(m[2].toLowerCase().slice(0, 3))); let d = t; for (let i = 0; i < 7; i++, d = addDays(d, 1)) if (dow(d) === want) break; if (/^next /.test(w) && d === t) d = addDays(d, 7); out.push(d); }
     else if (m[3]) out.push(`${m[3]}-${m[4]}-${m[5]}`);
     else if (m[6]) out.push(nextOf(+m[6], +m[7]));
     else if (m[8]) out.push(nextOf(MONTHS.indexOf(m[8].toLowerCase()) + 1, +m[9]));
