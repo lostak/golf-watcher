@@ -1,8 +1,7 @@
 name: golf-watch
+# Started by tick.yml every 5 minutes while a day is wanted (5 AM–10 PM), by Discord/Pocket commands, and by
+# changes to wants.json. No cron of its own.
 on:
-  schedule:
-    # Every 5 minutes, 5 AM–10 PM Denver only (UTC hours below cover both MST and MDT; the gate trims the edges).
-    - cron: '*/5 0-4,11-23 * * *'   # GitHub may delay scheduled runs by a few minutes
   workflow_dispatch:
     inputs:
       dry: { description: 'Dry run (read only, no Slack, no state)', type: boolean, default: false }

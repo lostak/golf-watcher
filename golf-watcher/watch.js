@@ -11,7 +11,8 @@ const fs = require('fs');
 const cfg = JSON.parse(fs.readFileSync('wants.json', 'utf8'));
 const STATE = 'state/seen.json';
 const DRY = process.argv.includes('--dry');
-const REPORT = process.argv.includes('--report');   // daily report mode: no wants needed; posts a summary of open daylight tee times
+const DAILY = process.argv.includes('--daily');     // with --report: only post if today's report hasn't gone out yet
+const REPORT = process.argv.includes('--report') || DAILY;   // daily report mode: no wants needed; posts a summary of open daylight tee times
 const DEBUG = process.argv.includes('--debug') || process.env.DEBUG === '1';
 const TZ = cfg.timezone || 'America/Denver';
 const CENTER = cfg.center || { lat: 39.7294, lng: -104.8319 }; // Aurora, CO
@@ -264,6 +265,7 @@ async function launch() {
     } catch (e) { log('Calendar read failed (' + e.message.slice(0, 120) + '); using wants.json'); }
   }
   const wants = cfg.wants.filter(w => w.date >= today);
+  if (DAILY) { try { if (JSON.parse(fs.readFileSync('state/report.json', 'utf8')).date === today) { log('Daily report already posted today.'); return; } } catch {} }
   if (!wants.length && !REPORT) { log('No upcoming wants.'); return; }
   const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   // report mode looks at today, tomorrow and the coming weekend; watch mode at the wanted days

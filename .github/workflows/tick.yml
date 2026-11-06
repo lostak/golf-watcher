@@ -1,0 +1,63 @@
+name: tick
+# Heartbeat, every ~5 minutes around the clock. Each run: reads new Discord commands in the golf channel, starts the
+# tee-time check when a day is wanted (5 AM–10 PM), starts the daily report on the first tick after 7:15 AM, then
+# waits out the rest of its 5 minutes and starts the next tick. GitHub's own 5-minute cron is unreliable (often hours
+# late), so cron here only restarts the chain if it ever stops.
+on:
+  schedule:
+    - cron: '3-58/5 * * * *'
+  workflow_dispatch:
+concurrency: { group: tick, cancel-in-progress: false }
+permissions: { contents: write, actions: write }
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - id: t0
+        working-directory: .
+        run: echo "t=$(date +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+      - name: Discord commands
+        id: cmd
+        env:
+          DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
+          DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
+          DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}'
+          GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
+          GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
+        run: |
+          set +e; node commands.js; rc=$?; set -e
+          [ "$rc" = "3" ] && echo "changed=yes" >> "$GITHUB_OUTPUT"
+          [ "$rc" = "4" ] && echo "report=yes" >> "$GITHUB_OUTPUT"
+          [ "$rc" = "0" ] || [ "$rc" = "3" ] || [ "$rc" = "4" ] || echo "::warning::commands.js exited $rc"
+      - name: Save cursor / wants
+        run: |
+          git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
+          git add state/discord.json wants.json 2>/dev/null; git diff --cached --quiet || (git commit -q -m "tick: discord state" && git pull --rebase -q -X theirs && git push -q) || true
+      - name: Start what's due
+        env:
+          GH_TOKEN: '${{ github.token }}'
+          GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
+          GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
+        run: |
+          h=$((10#$(TZ=America/Denver date +%H))); m=$((10#$(TZ=America/Denver date +%M))); today=$(TZ=America/Denver date +%F)
+          busy() { gh run list -R "$GITHUB_REPOSITORY" -w "$1" -L 5 --json status --jq '[.[]|select(.status!="completed")]|length'; }
+          n=$(node gate.js 2>/dev/null || echo 0)
+          echo "Denver $h:$m, $n day(s) wanted"
+          if [ "${{ steps.cmd.outputs.changed }}" = yes ] || { [ "$n" != "0" ] && [ "$h" -ge 5 ] && [ "$h" -lt 22 ]; }; then
+            if [ "$(busy golf-watch.yml)" = "0" ]; then gh workflow run golf-watch.yml -R "$GITHUB_REPOSITORY" --ref main && echo "→ tee-time check started"; else echo "tee-time check still running"; fi
+          fi
+          if [ "${{ steps.cmd.outputs.report }}" = yes ]; then gh workflow run daily-report.yml -R "$GITHUB_REPOSITORY" --ref main && echo "→ report (asked for)"; fi
+          rep=$(node -e "try{console.log(require('./state/report.json').date)}catch{console.log('')}")
+          if [ "$rep" != "$today" ] && [ "$h" -lt 21 ] && { [ "$h" -gt 7 ] || { [ "$h" -eq 7 ] && [ "$m" -ge 15 ]; }; }; then
+            if [ "$(busy daily-report.yml)" = "0" ]; then gh workflow run daily-report.yml -R "$GITHUB_REPOSITORY" --ref main -f daily=true && echo "→ daily report started"; fi
+          fi
+      - name: Next tick in 5 minutes
+        if: always()
+        working-directory: .
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          left=$(( 300 - ($(date +%s) - ${{ steps.t0.outputs.t }}) )); [ "$left" -gt 0 ] && sleep "$left"
+          gh workflow run tick.yml -R "$GITHUB_REPOSITORY" --ref main
