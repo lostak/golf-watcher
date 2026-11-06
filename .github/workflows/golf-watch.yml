@@ -4,12 +4,15 @@ on:
     # Every 5 minutes, 5 AM–10 PM Denver only (UTC hours below cover both MST and MDT; the gate trims the edges).
     - cron: '*/5 0-4,11-23 * * *'   # GitHub may delay scheduled runs by a few minutes
   workflow_dispatch:
+    inputs:
+      dry: { description: 'Dry run (read only, no Slack, no state)', type: boolean, default: false }
+      debug: { description: 'Verbose log', type: boolean, default: false }
 concurrency: { group: golf-watch, cancel-in-progress: false }
 permissions: { contents: write, actions: write }
 jobs:
   watch:
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     defaults: { run: { working-directory: golf-watcher } }
     steps:
       - uses: actions/checkout@v4
@@ -33,13 +36,12 @@ jobs:
         with: { node-version: 20 }
       - if: steps.gate.outputs.run == 'yes'
         run: npm install --no-audit --no-fund
+      # No browser download: the runner's own Google Chrome is used (chromium.launch({ channel: 'chrome' })).
       - if: steps.gate.outputs.run == 'yes'
-        run: npx playwright install --with-deps chromium
-      - if: steps.gate.outputs.run == 'yes'
-        run: node watch.js
+        run: node watch.js ${{ inputs.dry && '--dry' || '' }} ${{ inputs.debug && '--debug' || '' }}
         env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}' }
       - name: Save seen list
-        if: steps.gate.outputs.run == 'yes'
+        if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
           git add state/seen.json && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list" && git pull --rebase -q && git push))

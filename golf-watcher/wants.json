@@ -1,6 +1,8 @@
 {
   "timezone": "America/Denver",
-  "courses": "Evergreen|Willis Case|City Park|Wellshire|Foothills",
+  "center": { "lat": 39.7294, "lng": -104.8319 },
+  "radiusMiles": 30,
+  "exclude": "",
   "wants": [
     { "date": "2026-11-07", "from": "07:00", "to": "11:00", "players": 4 }
   ]
