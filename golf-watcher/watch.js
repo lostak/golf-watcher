@@ -86,49 +86,83 @@ async function readMemberSports(browser, site, dates) {
   await p.close(); return found;
 }
 
-// ---------- GolfNow area search (every course within the radius) ----------
+// ---------- GolfNow: every course within the radius ----------
+// 1) the area-search page's own "courses-near-me" call gives the list of facilities (id, name, location);
+// 2) a facility page's own "tee-time-results" call gives the request template, replayed per facility and date.
+function walk(x, fn, depth = 0) { if (!x || typeof x !== 'object' || depth > 6) return; fn(x); for (const v of Object.values(x)) walk(v, fn, depth + 1); }
 function gnMinutes(t) {
-  const iso = t.time && (t.time.time || t.time.iso || (typeof t.time === 'string' ? t.time : null));
+  const iso = t.time && (t.time.time || t.time.iso || t.time.dateTime || (typeof t.time === 'string' ? t.time : null));
   if (iso && /T\d\d:\d\d/.test(iso)) { const [, hh, mm] = iso.match(/T(\d\d):(\d\d)/); return +hh * 60 + +mm; }
-  const f = t.time && (t.time.formatted || t.time.formattedTime), mer = t.time && t.time.formattedTimeMeridian;
+  const f = (t.time && (t.time.formatted || t.time.formattedTime)) || t.formattedTime, mer = (t.time && t.time.formattedTimeMeridian) || t.formattedTimeMeridian;
   if (!f) return null;
-  const [hh, mm] = f.split(':').map(Number);
+  const [hh, mm] = String(f).split(':').map(Number);
   return ((mer === 'PM' && hh !== 12) ? hh + 12 : (mer === 'AM' && hh === 12) ? 0 : hh) * 60 + mm;
+}
+const miles = (a, b) => { const r = Math.PI / 180, dl = (b.lng - a.lng) * r * Math.cos((a.lat + b.lat) / 2 * r), dp = (b.lat - a.lat) * r; return 3959 * Math.sqrt(dl * dl + dp * dp); };
+async function capture(p, url, re, waitMs = 25000) {
+  let req; const seen = new Set();
+  const onReq = r => { if (re.test(r.url())) req = r; if (DEBUG && /golfnow\.com\/api/i.test(r.url())) seen.add(r.method() + ' ' + r.url()); };
+  p.on('request', onReq);
+  await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+  for (let i = 0; i < waitMs / 500 && !req; i++) await p.waitForTimeout(500);
+  p.off('request', onReq);
+  if (!req) { dbg('api calls seen:', [...seen]); return null; }
+  const h = req.headers(); delete h['content-length'];
+  return { url: req.url(), method: req.method(), headers: h, body: req.postData() ? JSON.parse(req.postData()) : null };
+}
+async function replay(p, tpl, body) {
+  const text = await p.evaluate(async ({ u, m, h, body }) => (await fetch(u, { method: m, headers: h, body: body == null ? undefined : JSON.stringify(body) })).text(),
+    { u: tpl.url, m: tpl.method, h: tpl.headers, body });
+  try { return JSON.parse(text); } catch (e) { throw new Error('non-JSON from ' + tpl.url + ': ' + text.slice(0, 60)); }
 }
 async function readGolfNow(browser, dates, playersByDate) {
   const found = [], p = await browser.newPage();
-  const seenUrls = new Set();
-  let req; // the site's own search call, replayed per date with a big page size
-  p.on('request', r => { if (/tee-time-results|tee-time-search-results|tee-times\/search/i.test(r.url()) && r.method() === 'POST') req = r; });
-  p.on('response', r => { if (DEBUG && /golfnow\.com\/api/i.test(r.url())) seenUrls.add(r.url()); });
-  const first = dates[0], np = playersByDate[first];
-  const url = `https://www.golfnow.com/tee-times/search#facilitytype=GolfCourse&date=${gnDate(first)}&longitude=${CENTER.lng}&latitude=${CENTER.lat}&radius=${RADIUS}&players=${np}&sortby=Facilities.Distance.0`;
-  await p.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
-  for (let i = 0; i < 25 && !req; i++) await p.waitForTimeout(1000);
-  if (!req) { dbg('api urls seen:', [...seenUrls].slice(0, 10)); throw new Error('no search request seen on the GolfNow area search page'); }
-  const h = req.headers(); delete h['content-length'];
-  const base = JSON.parse(req.postData() || '{}');
-  dbg('GolfNow search body keys:', Object.keys(base).join(','), 'endpoint:', req.url());
-  const facilities = new Set();
-  for (const date of dates) {
-    const body = { ...base, Date: gnDate(date).replace(/\+/g, ' '), PageSize: 500, PageNumber: 0, Radius: RADIUS, Latitude: CENTER.lat, Longitude: CENTER.lng, Players: String(playersByDate[date]) };
-    if ('date' in base) body.date = body.Date;
-    const text = await p.evaluate(async ({ u, h, body }) => (await fetch(u, { method: 'POST', headers: h, body: JSON.stringify(body) })).text(), { u: req.url(), h, body });
-    let j; try { j = JSON.parse(text); } catch (e) { throw new Error('GolfNow search returned non-JSON: ' + text.slice(0, 80)); }
-    const list = (j.ttResults && j.ttResults.teeTimes) || j.teeTimes || [];
-    dbg(`GolfNow ${date}: ${list.length} tee times, total reported ${j.ttResults && j.ttResults.totalCount}`);
-    for (const t of list) {
-      const fac = t.facility || {};
-      const name = fac.name || t.facilityName; if (!name || !wanted(name)) continue;
-      facilities.add(name);
+  const first = dates[0];
+  // 1) facilities near the center
+  const area = `https://www.golfnow.com/tee-times/search#facilitytype=GolfCourse&date=${gnDate(first)}&longitude=${CENTER.lng}&latitude=${CENTER.lat}&radius=${RADIUS}&players=${playersByDate[first]}&sortby=Facilities.Distance.0`;
+  const near = await capture(p, area, /courses-near-me|tee-time-results|tee-time-search-results/i);
+  if (!near) throw new Error('no course-search call seen on the GolfNow area page');
+  dbg('near-me call:', near.method, near.url, 'body keys:', near.body ? Object.keys(near.body).join(',') : '(none)');
+  let nb = near.body;
+  if (nb) { for (const [k, v] of Object.entries({ Latitude: CENTER.lat, Longitude: CENTER.lng, Radius: RADIUS, PageSize: 500, PageNumber: 0 })) if (k in nb) nb[k] = v; }
+  const nj = await replay(p, near, nb);
+  if (DEBUG) dbg('near-me response:', JSON.stringify(nj).slice(0, 1500));
+  const facs = new Map();
+  walk(nj, o => {
+    const id = o.facilityId || (o.facility && o.facility.id) || (typeof o.id === 'number' && (o.name || o.facilityName) ? o.id : null);
+    const name = o.name || o.facilityName || (o.facility && o.facility.name);
+    const lat = o.latitude || (o.address && o.address.latitude) || (o.facility && o.facility.latitude), lng = o.longitude || (o.address && o.address.longitude) || (o.facility && o.facility.longitude);
+    if (id && name && typeof name === 'string' && !facs.has(id)) facs.set(id, { id, name, slug: o.seoFriendlyName || (o.facility && o.facility.seoFriendlyName) || id, lat, lng });
+  });
+  let list = [...facs.values()].filter(f => wanted(f.name));
+  if (list.some(f => f.lat && f.lng)) list = list.filter(f => !(f.lat && f.lng) || miles(CENTER, f) <= RADIUS + 1);
+  log(`GolfNow: ${list.length} courses within ${RADIUS} mi: ${list.map(f => f.name).sort().join(', ') || '(none)'}`);
+  if (!list.length) { await p.close(); return found; }
+  // 2) the tee-sheet call template, captured from one facility page
+  const tplFac = list[0];
+  const tpl = await capture(p, `https://www.golfnow.com/tee-times/facility/${tplFac.slug}/search#date=${gnDate(first)}&players=${playersByDate[first]}`, /tee-time-results|tee-time-search-results/i);
+  if (!tpl || !tpl.body) throw new Error('no tee-sheet call seen on a GolfNow facility page');
+  dbg('tee-sheet call:', tpl.method, tpl.url, 'body:', JSON.stringify(tpl.body).slice(0, 600));
+  const idKey = Object.keys(tpl.body).find(k => /facilityid/i.test(k)) || 'FacilityId';
+  const dateKey = Object.keys(tpl.body).find(k => /^date$/i.test(k)) || 'Date';
+  const playersKey = Object.keys(tpl.body).find(k => /^players$/i.test(k));
+  let firstDump = true;
+  for (const date of dates) for (const f of list) {
+    const body = { ...tpl.body, [idKey]: f.id, [dateKey]: gnDate(date).replace(/\+/g, ' '), PageSize: 200, PageNumber: 0 };
+    if (playersKey) body[playersKey] = typeof tpl.body[playersKey] === 'number' ? playersByDate[date] : String(playersByDate[date]);
+    if ('TimeMin' in body) body.TimeMin = 10; if ('TimeMax' in body) body.TimeMax = 42;
+    let j; try { j = await replay(p, tpl, body); } catch (e) { dbg(f.name, e.message); continue; }
+    if (DEBUG && firstDump) { dbg('tee-sheet response sample:', JSON.stringify(j).slice(0, 1200)); firstDump = false; }
+    const tts = (j.ttResults && j.ttResults.teeTimes) || j.teeTimes || [];
+    dbg(`${f.name} ${date}: ${tts.length} tee times`);
+    for (const t of tts) {
       const min = gnMinutes(t); if (min == null) continue;
-      const price = (t.displayRate && (t.displayRate.value || t.displayRate)) || (t.minTeeTimeRate && t.minTeeTimeRate.value) || t.displayRate;
-      const slug = fac.seoFriendlyName || fac.id || t.facilityId;
-      const link = `https://www.golfnow.com/tee-times/facility/${slug}/search#date=${gnDate(date)}&players=${playersByDate[date]}`;
-      found.push({ date, min, course: name, spots: playersByDate[date], price: typeof price === 'number' ? price : undefined, link, key: `${date}|${name}|${min}` });
+      const rate = t.displayRate != null ? t.displayRate : (t.minTeeTimeRate && t.minTeeTimeRate.value);
+      const price = typeof rate === 'object' && rate ? rate.value : rate;
+      const link = `https://www.golfnow.com/tee-times/facility/${f.slug}/search#date=${gnDate(date)}&players=${playersByDate[date]}`;
+      found.push({ date, min, course: f.name, spots: playersByDate[date], price: typeof price === 'number' ? price : undefined, link, key: `${date}|${f.name}|${min}` });
     }
   }
-  log(`GolfNow: ${facilities.size} courses within ${RADIUS} mi: ${[...facilities].sort().join(', ') || '(none)'}`);
   await p.close(); return found;
 }
 
