@@ -16,7 +16,10 @@ const DEBUG = process.argv.includes('--debug') || process.env.DEBUG === '1';
 const TZ = cfg.timezone || 'America/Denver';
 const CENTER = cfg.center || { lat: 39.7294, lng: -104.8319 }; // Aurora, CO
 const RADIUS = cfg.radiusMiles || 30;
-const INCLUDE = cfg.courses ? new RegExp(cfg.courses, 'i') : null;   // optional: only these courses
+let INCLUDE = cfg.courses ? new RegExp(cfg.courses, 'i') : null;     // optional: only these courses (the calendar's COURSE lines override this)
+const gcal = require('./gcal');                                        // Bradley's calendar is the source of truth when configured
+const courseKey = c => String(c).replace(/\s*\(.*\)\s*$/, '').replace(/\b(golf|course|club|the)\b/gi, '').trim();
+const courseRe = list => new RegExp(list.map(c => courseKey(c).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|'), 'i');
 const EXCLUDE = cfg.exclude ? new RegExp(cfg.exclude, 'i') : null;   // optional: never these courses
 const MAX_LINES = 12;
 
@@ -245,6 +248,21 @@ async function launch() {
 
 (async () => {
   const today = todayDenver();
+  // Source of truth: the silent "Personal: golf watch" calendar event (COURSE:/WANT: lines) that the app, Pocket and Discord write.
+  // wants.json's "wants" list is only the fallback when the calendar isn't configured.
+  let golfEv = null;
+  if (gcal.ready) {
+    try {
+      golfEv = await gcal.findByTitle('Personal: golf watch', 'golf watch');
+      if (golfEv) {
+        const d = golfEv.description || '';
+        const courses = [...d.matchAll(/^\s*COURSE:\s*(.+?)\s*$/gm)].map(m => m[1]);
+        cfg.wants = [...d.matchAll(/^\s*WANT:\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(\d)\s*players?/gim)].map(m => ({ date: m[1], from: m[2].padStart(5, '0'), to: m[3].padStart(5, '0'), players: +m[4] }));
+        if (courses.length) INCLUDE = courseRe(courses);
+        log(`Calendar golf watch: ${cfg.wants.length} want(s), ${courses.length ? courses.length + ' course(s): ' + courses.join(', ') : 'all courses'}`);
+      } else { log('Calendar: no "Personal: golf watch" event yet.'); cfg.wants = []; }
+    } catch (e) { log('Calendar read failed (' + e.message.slice(0, 120) + '); using wants.json'); }
+  }
   const wants = cfg.wants.filter(w => w.date >= today);
   if (!wants.length && !REPORT) { log('No upcoming wants.'); return; }
   const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -309,6 +327,23 @@ async function launch() {
     msg += `\nBook directly on the course's site. Pick the date on the page.`;
     await notify(msg);
     for (const m of matches) seen[m.key] = Date.now();
+    if (golfEv) {                                                      // alert events + FOUND lines, so the app's Golf tab and the morning brief see them
+      try {
+        for (const m of matches.slice(0, 5)) await gcal.insert({ summary: `Personal: tee time open – ${m.course} ${niceDate(m.date)} ${fmt(m.min)}`, when: gcal.nextQuarter(),
+          description: `Book here: ${m.link}\n${m.course}\n${niceDate(m.date)} ${fmt(m.min)} – ${m.spots} open spots${m.price != null ? ' – $' + m.price : ''}\nTee times go fast – book directly on the course's site, then tap 'I booked it' in the Golf tab of My Life.` });
+      } catch (e) { log('Calendar alert events failed: ' + e.message.slice(0, 120)); }
+    }
+  }
+  if (golfEv && !DRY) {                                                // housekeeping on the golf watch event: FOUND lines, LAST CHECKED, drop past days
+    try {
+      const d = golfEv.description || '';
+      const foundOld = [...d.matchAll(/^\s*FOUND:.*$/gm)].map(m => m[0].trim()).filter(l => (l.match(/\d{4}-\d{2}-\d{2}/) || [''])[0] >= today);
+      const foundNew = matches.map(m => `FOUND: ${m.date} ${m.course} ${fmt(m.min)} ${m.spots} players${m.price != null ? ' $' + m.price : ''} ${m.link}`);
+      const wantLines = [...d.matchAll(/^\s*WANT:.*$/gm)].map(m => m[0].trim()).filter(l => (l.match(/\d{4}-\d{2}-\d{2}/) || [''])[0] >= today);
+      const keep = d.split('\n').filter(l => !/^\s*(FOUND:|WANT:|LAST CHECKED:|GOLF-WATCH)/.test(l));
+      const next = [...keep, ...wantLines, ...foundOld, ...foundNew, `LAST CHECKED: ${gcal.nowLocal()}`, 'GOLF-WATCH'].join('\n');
+      if (next !== d) await gcal.patch(golfEv.id, { description: next });
+    } catch (e) { log('Calendar housekeeping failed: ' + e.message.slice(0, 120)); }
   }
   if (errors.length && !DRY && !all.length) await notify('⚠️ Golf watcher could not read any tee sheets: ' + errors.join('; '));
   fs.mkdirSync('state', { recursive: true });

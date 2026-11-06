@@ -19,10 +19,13 @@ jobs:
           DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
           DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
           DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}'
+          GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
+          GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
         run: |
           set +e; node commands.js; rc=$?; set -e
           [ "$rc" = "3" ] && echo "changed=yes" >> "$GITHUB_OUTPUT"
-          [ "$rc" = "0" ] || [ "$rc" = "3" ]
+          [ "$rc" = "4" ] && echo "report=yes" >> "$GITHUB_OUTPUT"
+          [ "$rc" = "0" ] || [ "$rc" = "3" ] || [ "$rc" = "4" ]
       - name: Save cursor / wants
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
@@ -32,3 +35,4 @@ jobs:
             gh workflow enable golf-watch.yml -R "$GITHUB_REPOSITORY" || true
             gh workflow run golf-watch.yml -R "$GITHUB_REPOSITORY" --ref main
           fi
+          [ "${{ steps.cmd.outputs.report }}" = "yes" ] && gh workflow run daily-report.yml -R "$GITHUB_REPOSITORY" --ref main || true

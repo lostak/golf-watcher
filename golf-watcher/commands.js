@@ -11,10 +11,12 @@
 // Exit code 3 means wants.json changed (the workflow then commits and wakes the watcher).
 'use strict';
 const fs = require('fs');
+const gcal = require('./gcal');   // when configured, the "Personal: golf watch" calendar event is the source of truth (shared with the app and Pocket)
 const TZ = 'America/Denver';
 const WANTS = 'wants.json', STATE = 'state/discord.json', COURSES = 'state/courses.json';
-const token = process.env.DISCORD_BOT_TOKEN, channel = process.env.DISCORD_CHANNEL_ID, hook = process.env.DISCORD_WEBHOOK_URL;
-if (!token || !channel) { console.log('DISCORD_BOT_TOKEN / DISCORD_CHANNEL_ID not set – skipping.'); process.exit(0); }
+const token = process.env.DISCORD_BOT_TOKEN, channel = process.env.DISCORD_CHANNEL_ID, hook = process.env.DISCORD_WEBHOOK_URL, slackHook = process.env.SLACK_WEBHOOK_URL;
+const TEXT = (() => { const i = process.argv.indexOf('--text'); return i > -1 ? process.argv[i + 1] : null; })();   // one command passed in (from Pocket via Claude) instead of reading Discord
+if (!TEXT && (!token || !channel)) { console.log('DISCORD_BOT_TOKEN / DISCORD_CHANNEL_ID not set – skipping.'); process.exit(0); }
 
 const today = () => new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -78,18 +80,34 @@ async function discord(path, opts = {}) {
   if (!r.ok) throw new Error(`Discord ${path} → ${r.status} ${await r.text()}`);
   return r.json();
 }
-async function reply(text) { console.log('reply:', text); if (hook) await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: text.slice(0, 1990) }) }); }
+async function reply(text) {
+  console.log('reply:', text);
+  if (hook) await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: text.slice(0, 1990) }) });
+  if (TEXT && slackHook) await fetch(slackHook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });   // a Pocket request also gets its answer in Slack
+}
 
 (async () => {
   const st = fs.existsSync(STATE) ? JSON.parse(fs.readFileSync(STATE, 'utf8')) : {};
   const cfg = JSON.parse(fs.readFileSync(WANTS, 'utf8'));
+  // Calendar mode: read COURSE/WANT lines from the golf watch event into cfg.wants / courseList; written back at the end.
+  let golfEv = null, courseList = [], otherLines = [];
+  if (gcal.ready) {
+    golfEv = await gcal.findByTitle('Personal: golf watch', 'golf watch');
+    const d = golfEv ? golfEv.description || '' : '';
+    courseList = [...d.matchAll(/^\s*COURSE:\s*(.+?)\s*$/gm)].map(m => m[1]);
+    cfg.wants = [...d.matchAll(/^\s*WANT:\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(\d)\s*players?/gim)].map(m => ({ date: m[1], from: m[2].padStart(5, '0'), to: m[3].padStart(5, '0'), players: +m[4] }));
+    otherLines = d.split('\n').filter(l => !/^\s*(COURSE:|WANT:|GOLF-WATCH)/.test(l) && l.trim());
+    if (!otherLines.length) otherLines = ['Tee-time watch for the Life app. The tee-time task checks these courses for the WANT days and adds FOUND lines.'];
+  }
+  const courseLabel = () => courseList.length ? ' at ' + courseList.join(', ') : ' at every public course within 40 miles';
   let msgs;
-  if (!st.last) {                                                     // first run: start from now, don't replay old messages
+  if (TEXT) msgs = [{ id: st.last, content: TEXT }];
+  else if (!st.last) {                                                // first run: start from now, don't replay old messages
     msgs = await discord(`/channels/${channel}/messages?limit=1`);
     st.last = msgs[0] ? msgs[0].id : '0'; msgs = [];
     console.log('First run – cursor set, nothing processed.');
   } else msgs = (await discord(`/channels/${channel}/messages?after=${st.last}&limit=50`)).reverse();
-  let changed = false;
+  let changed = false, report = false;
   for (const msg of msgs) {
     st.last = msg.id;
     if (msg.author?.bot || msg.webhook_id) continue;
@@ -99,7 +117,15 @@ async function reply(text) { console.log('reply:', text); if (hook) await fetch(
     const before = cfg.wants.length;
     if (/^(list|status|what.*watch)/.test(t)) {
       const open = cfg.wants.filter(w => w.date >= today());
-      await reply(open.length ? 'Watching: ' + open.map(w => `${nice(w.date)} ${fmt(w.from)}–${fmt(w.to)} for ${w.players}${w.courses ? ' at ' + w.courses.join(', ') : ''}`).join(' · ') : 'Not watching any days. Post "watch Sat 7-11 for 4" to start.');
+      await reply(open.length ? 'Watching: ' + open.map(w => `${nice(w.date)} ${fmt(w.from)}–${fmt(w.to)} for ${w.players}${w.courses ? ' at ' + w.courses.join(', ') : ''}`).join(' · ') + (gcal.ready ? courseLabel() : '') : 'Not watching any days. Post "watch Sat 7-11 for 4" to start.');
+      continue;
+    }
+    if (/^report\b/.test(t)) { report = true; await reply('Posting the golf report in a few minutes.'); continue; }
+    if (gcal.ready && /^(remove|drop|stop watching)\s+(course\s+)?(.+)/.test(t) && !parseDates(text).length && !/\ball\b/.test(t)) {
+      const name = t.match(/^(?:remove|drop|stop watching)\s+(?:course\s+)?(.+)/)[1].replace(/^course\s+/, '').trim();
+      const before = courseList.length; courseList = courseList.filter(c => !c.toLowerCase().includes(name));
+      changed = changed || courseList.length !== before;
+      await reply(courseList.length !== before ? `Removed. Courses now: ${courseList.join(', ') || 'all public courses'}.` : `No watched course matches "${name}". Courses: ${courseList.join(', ') || 'all'}.`);
       continue;
     }
     if (/^(stop|cancel|remove|clear|drop)\b/.test(t)) {
@@ -115,15 +141,22 @@ async function reply(text) { console.log('reply:', text); if (hook) await fetch(
     const [from, to] = parseWindow(text), players = parsePlayers(text), courses = parseCourses(text);
     for (const date of dates) {
       cfg.wants = cfg.wants.filter(w => !(w.date === date && w.from === from && w.to === to));
-      const w = { date, from, to, players }; if (courses.length) w.courses = courses;
+      const w = { date, from, to, players }; if (courses.length && !gcal.ready) w.courses = courses;
       cfg.wants.push(w);
     }
+    if (gcal.ready) for (const c of courses) if (!courseList.some(k => k.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(k.toLowerCase().replace(/\s*\(.*\)$/, '')))) courseList.push(c);
     cfg.wants = cfg.wants.filter(w => w.date >= today()).sort((a, b) => a.date.localeCompare(b.date) || a.from.localeCompare(b.from));
     changed = true;
-    await reply(`Got it – watching ${dates.map(nice).join(', ')} ${fmt(from)}–${fmt(to)} for ${players}${courses.length ? ' at ' + courses.join(', ') : ' at every public course within 40 miles'}. I check every 5 minutes, 5 AM–10 PM, and post here the moment something opens.`);
+    await reply(`Got it – watching ${dates.map(nice).join(', ')} ${fmt(from)}–${fmt(to)} for ${players}${gcal.ready ? courseLabel() : courses.length ? ' at ' + courses.join(', ') : ' at every public course within 40 miles'}. I check every 5 minutes, 5 AM–10 PM, and post here the moment something opens.`);
   }
   fs.mkdirSync('state', { recursive: true });
-  fs.writeFileSync(STATE, JSON.stringify(st));
+  if (!TEXT) fs.writeFileSync(STATE, JSON.stringify(st));
+  if (changed && gcal.ready) {
+    const body = [...otherLines, ...courseList.map(c => 'COURSE: ' + c), ...cfg.wants.map(w => `WANT: ${w.date} ${w.from}-${w.to} ${w.players} player${w.players > 1 ? 's' : ''}`), 'GOLF-WATCH'].join('\n');
+    if (golfEv) await gcal.patch(golfEv.id, { description: body }); else await gcal.insert({ summary: 'Personal: golf watch', description: body, when: new Date(), popup: null });
+    console.log('calendar golf watch updated'); process.exit(3);
+  }
   if (changed) { fs.writeFileSync(WANTS, JSON.stringify(cfg, null, 2) + '\n'); console.log('wants.json changed'); process.exit(3); }
+  if (report) process.exit(4);
   console.log(`${msgs.length} message(s), no change.`);
 })().catch(e => { console.error(e); process.exit(1); });

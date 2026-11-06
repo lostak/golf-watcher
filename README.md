@@ -15,3 +15,10 @@ Post in the Discord golf channel (a bot reads it every 5 minutes):
 The bot replies in the channel and the watcher starts checking within a few minutes. With nothing being watched,
 a daily report (7:15 AM) lists the earliest daylight tee time per course for today, tomorrow and the weekend.
 Secrets for this: `DISCORD_BOT_TOKEN`, `DISCORD_CHANNEL_ID` (the golf channel), `DISCORD_WEBHOOK_URL`.
+
+## One source of truth: Bradley's Google Calendar
+When `GCAL_SA_KEY` + `GCAL_CALENDAR_ID` are set (a Google service account the calendar is shared with), the watcher reads the
+days to watch and the courses from the silent calendar event **"Personal: golf watch"** (`COURSE:` / `WANT:` lines) – the same
+event the My Life app (web, Android, desktop), the Pocket processor and Discord commands write – and writes `FOUND:` lines,
+`LAST CHECKED:` and "Personal: tee time open – …" alert events back to it, so every surface shows the same thing.
+`wants.json` then only holds the area settings; its `wants` list is the fallback when the calendar isn't configured.

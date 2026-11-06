@@ -26,7 +26,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - if: steps.gate.outputs.run == 'yes'
         run: node watch.js --report ${{ inputs.dry && '--dry' || '' }}
-        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}' }
+        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
       - if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
