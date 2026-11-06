@@ -6,6 +6,7 @@ on:
     inputs:
       dry: { description: 'Dry run (print only)', type: boolean, default: false }
       daily: { description: 'Only if the report has not been posted yet today', type: boolean, default: false }
+      debug: { description: 'Verbose log', type: boolean, default: false }
 concurrency: { group: daily-report, cancel-in-progress: false }
 permissions: { contents: write }
 jobs:
@@ -18,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
       - run: npm install --no-audit --no-fund
-      - run: node watch.js --report ${{ inputs.daily && '--daily' || '' }} ${{ inputs.dry && '--dry' || '' }}
+      - run: node watch.js --report ${{ inputs.daily && '--daily' || '' }} ${{ inputs.dry && '--dry' || '' }} ${{ inputs.debug && '--debug' || '' }}
         env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
       - if: ${{ !inputs.dry }}
         run: |
