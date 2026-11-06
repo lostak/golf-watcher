@@ -1,0 +1,16 @@
+name: golf-watch-wake
+# When wants.json changes, turn the golf-watch schedule back on and run one check right away.
+on:
+  push:
+    branches: [main]
+    paths: ['golf-watcher/wants.json']
+permissions: { actions: write }
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          gh workflow enable golf-watch.yml -R "$GITHUB_REPOSITORY"
+          gh workflow run golf-watch.yml -R "$GITHUB_REPOSITORY" --ref main

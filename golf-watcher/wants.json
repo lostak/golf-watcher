@@ -1,0 +1,7 @@
+{
+  "timezone": "America/Denver",
+  "courses": "Evergreen|Willis Case|City Park|Wellshire|Foothills",
+  "wants": [
+    { "date": "2026-11-07", "from": "07:00", "to": "11:00", "players": 4 }
+  ]
+}

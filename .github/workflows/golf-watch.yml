@@ -1,0 +1,45 @@
+name: golf-watch
+on:
+  schedule:
+    # Every 5 minutes, 5 AM–10 PM Denver only (UTC hours below cover both MST and MDT; the gate trims the edges).
+    - cron: '*/5 0-4,11-23 * * *'   # GitHub may delay scheduled runs by a few minutes
+  workflow_dispatch:
+concurrency: { group: golf-watch, cancel-in-progress: false }
+permissions: { contents: write, actions: write }
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - uses: actions/checkout@v4
+      - name: Gate (quiet hours, anything to watch?)
+        id: gate
+        env: { GH_TOKEN: '${{ github.token }}', EVENT: '${{ github.event_name }}' }
+        run: |
+          today=$(TZ=America/Denver date +%F); h=$((10#$(TZ=America/Denver date +%H)))
+          n=$(node -e "const c=require('./wants.json');console.log(c.wants.filter(w=>w.date>='$today').length)")
+          if [ "$n" = "0" ]; then
+            echo "No upcoming days in wants.json – pausing the schedule until wants.json changes."
+            gh workflow disable golf-watch.yml -R "$GITHUB_REPOSITORY" || true
+            echo "run=no" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$EVENT" = "schedule" ] && { [ "$h" -ge 22 ] || [ "$h" -lt 5 ]; }; then
+            echo "Quiet hours (10 PM–5 AM) – skipping."; echo "run=no" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "$n window(s) to watch."; echo "run=yes" >> "$GITHUB_OUTPUT"
+      - if: steps.gate.outputs.run == 'yes'
+        uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - if: steps.gate.outputs.run == 'yes'
+        run: npm install --no-audit --no-fund
+      - if: steps.gate.outputs.run == 'yes'
+        run: npx playwright install --with-deps chromium
+      - if: steps.gate.outputs.run == 'yes'
+        run: node watch.js
+        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}' }
+      - name: Save seen list
+        if: steps.gate.outputs.run == 'yes'
+        run: |
+          git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
+          git add state/seen.json && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list" && git pull --rebase -q && git push))
