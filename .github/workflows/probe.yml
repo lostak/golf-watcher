@@ -1,0 +1,12 @@
+name: probe
+on: { workflow_dispatch: {} }
+permissions: {}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install --no-audit --no-fund
+      - run: node probe-aurora.js
