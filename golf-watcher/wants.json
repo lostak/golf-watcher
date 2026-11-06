@@ -1,9 +1,10 @@
 {
   "timezone": "America/Denver",
-  "center": { "lat": 39.7294, "lng": -104.8319 },
+  "center": {
+    "lat": 39.7294,
+    "lng": -104.8319
+  },
   "radiusMiles": 40,
   "exclude": "Par 3|Par-3|Footgolf|Back Nine|Front Nine|Back 9|Front 9|9 Hole|Executive",
-  "wants": [
-    { "date": "2026-11-07", "from": "07:00", "to": "11:00", "players": 4 }
-  ]
+  "wants": []
 }
