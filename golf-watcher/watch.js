@@ -22,7 +22,16 @@ const MAX_LINES = 12;
 const MS_SITES = [ // MemberSports: page + the club/course ids its own booking call uses
   { page: 'https://app.membersports.com/tee-times/3629/20573/1/1/0', label: 'Denver Golf' },
   { page: 'https://app.membersports.com/tee-times/3697/4758/0/3/0', label: 'Foothills' },
+  { page: 'https://app.membersports.com/tee-times/3748/4817/0/0/0', label: 'CommonGround' },
+  { page: 'https://app.membersports.com/tee-times/3663/4714/0/0/0', label: 'Coal Creek' },
+  ...(cfg.memberSports || []),
 ];
+// Chronogolf (Lightspeed) clubs: South Suburban district, Arvada, Riverdale, Lakewood. Slugs are the club page URLs.
+const CHRONO = cfg.chronogolf || ['south-suburban-golf-club', 'lone-tree-golf-club-hotel', 'littleton-golf-tennis-club', 'family-sports-golf-course',
+  'west-woods-golf-club', 'lake-arbor-golf-club', 'riverdale-dunes-knolls', 'riverdale-golf-courses', 'fox-hollow-golf-club', 'homestead-golf-course', 'fossil-trace-golf-club'];
+// ForeUP booking pages
+const FOREUP = cfg.foreup || [{ label: 'Black Bear', page: 'https://foreupsoftware.com/index.php/booking/20181#/teetimes' }];
+const MIN_HOLES = cfg.minHoles || 18;
 
 const todayDenver = () => new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 const hm = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
@@ -168,6 +177,55 @@ async function readGolfNow(browser, dates, playersByDate) {
   await p.close(); return found;
 }
 
+// ---------- Chronogolf (Lightspeed) ----------
+const denverMinutes = iso => { const d = new Date(iso); const [h, m] = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: TZ }).split(':').map(Number); return (h % 24) * 60 + m; };
+async function readChronogolf(browser, slug, dates) {
+  const found = [], p = await browser.newPage();
+  const tpl = await capture(p, `https://www.chronogolf.com/club/${slug}?date=${dates[0]}`, /marketplace\/v2\/teetimes\?/i, 20000);
+  if (!tpl) { await p.close(); throw new Error('no tee-sheet call (club slug may be wrong)'); }
+  const club = (await p.title()).replace(/\s*[|–-]\s*Chronogolf.*$/i, '').trim() || slug;
+  for (const date of dates) {
+    const u = tpl.url.replace(/start_date=\d{4}-\d{2}-\d{2}/, 'start_date=' + date);
+    const j = await replay(p, { ...tpl, url: u }, null);
+    const tts = j.teetimes || [];
+    dbg(`${club} ${date}: ${tts.length} tee times`);
+    for (const t of tts) {
+      const cname = (t.course && t.course.name) || '';
+      const holes = t.course && t.course.holes;
+      if (holes && holes < MIN_HOLES) continue;
+      const name = /\b(course|club)\b/i.test(cname) && cname.length > 8 && !/^\s*(front|back)?\s*\d+\s*hole/i.test(cname) ? cname : `${club}${cname ? ' – ' + cname : ''}`;
+      if (!wanted(name)) continue;
+      const min = t.starts_at ? denverMinutes(t.starts_at) : (t.start_time ? hm(t.start_time) : null); if (min == null) continue;
+      const spots = t.max_player_size || 4, price = t.default_price && t.default_price.green_fee;
+      found.push({ date, min, course: name, spots, price: typeof price === 'number' ? price : undefined, link: `https://www.chronogolf.com/club/${slug}?date=${date}`, key: `${date}|${name}|${min}` });
+    }
+  }
+  await p.close(); return found;
+}
+
+// ---------- ForeUP ----------
+async function readForeUp(browser, site, dates) {
+  const found = [], p = await browser.newPage();
+  const tpl = await capture(p, site.page, /api\/booking\/times\?/i, 20000);
+  if (!tpl) { await p.close(); throw new Error('no tee-sheet call on ' + site.page); }
+  for (const date of dates) {
+    const [y, mo, d] = date.split('-');
+    const u = tpl.url.replace(/date=\d{2}-\d{2}-\d{4}/, `date=${mo}-${d}-${y}`).replace(/players=\d/, 'players=0');
+    const j = await replay(p, { ...tpl, url: u }, null);
+    const tts = Array.isArray(j) ? j : [];
+    dbg(`${site.label} ${date}: ${tts.length} tee times`);
+    for (const t of tts) {
+      const m = String(t.time || '').match(/(\d{2}):(\d{2})$/); if (!m) continue;
+      if (t.holes && +t.holes < MIN_HOLES) continue;
+      const name = site.label + (t.course_name && !new RegExp(site.label, 'i').test(t.course_name) ? ' – ' + t.course_name : '');
+      if (!wanted(name)) continue;
+      const min = +m[1] * 60 + +m[2], spots = +t.available_spots || 4, price = +t.green_fee;
+      found.push({ date, min, course: name, spots, price: isNaN(price) ? undefined : price, link: site.page, key: `${date}|${name}|${min}` });
+    }
+  }
+  await p.close(); return found;
+}
+
 async function launch() {
   try { return await chromium.launch({ channel: 'chrome' }); }   // GitHub runners ship Google Chrome: no download needed
   catch (e) { dbg('system Chrome not available (' + e.message.split('\n')[0] + '), using Playwright Chromium'); return chromium.launch(); }
@@ -186,6 +244,10 @@ async function launch() {
   const errors = [];
   try { all = all.concat(await readGolfNow(browser, dates, playersByDate)); } catch (e) { errors.push(`GolfNow: ${e.message.slice(0, 100)}`); }
   for (const s of MS_SITES) { try { all = all.concat(await readMemberSports(browser, s, dates)); } catch (e) { errors.push(`${s.label}: ${e.message.slice(0, 100)}`); } }
+  const chronoOk = [];
+  for (const slug of CHRONO) { try { const r = await readChronogolf(browser, slug, dates); chronoOk.push(slug); all = all.concat(r); } catch (e) { dbg(`Chronogolf ${slug}: ${e.message.slice(0, 100)}`); if (!/slug may be wrong/.test(e.message)) errors.push(`${slug}: ${e.message.slice(0, 80)}`); } }
+  log(`Chronogolf: ${chronoOk.length}/${CHRONO.length} clubs read (${chronoOk.join(', ')})`);
+  for (const s of FOREUP) { try { all = all.concat(await readForeUp(browser, s, dates)); } catch (e) { errors.push(`${s.label}: ${e.message.slice(0, 100)}`); } }
   await browser.close();
 
   const matches = [];
