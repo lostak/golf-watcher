@@ -181,7 +181,7 @@ async function readGolfNow(browser, dates, playersByDate) {
 const denverMinutes = iso => { const d = new Date(iso); const [h, m] = d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', timeZone: TZ }).split(':').map(Number); return (h % 24) * 60 + m; };
 async function readChronogolf(browser, slug, dates) {
   const found = [], p = await browser.newPage();
-  const tpl = await capture(p, `https://www.chronogolf.com/club/${slug}?date=${dates[0]}`, /marketplace\/v2\/teetimes\?/i, 12000);
+  const tpl = await capture(p, `https://www.chronogolf.com/club/${slug}?date=${dates[0]}`, /marketplace\/v2\/(clubs\/\d+\/)?teetimes\?/i, 12000);
   if (!tpl) { const ok = !/page not found|404/i.test(await p.title()); await p.close(); throw new Error(ok ? 'no tee sheet shown (online booking closed for now?) – slug may be wrong' : 'club page not found – slug may be wrong'); }
   const club = (await p.title()).replace(/\s*[|–-]\s*Chronogolf.*$/i, '').trim() || slug;
   for (const date of dates) {
