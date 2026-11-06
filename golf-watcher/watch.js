@@ -124,7 +124,8 @@ async function readGolfNow(browser, dates, playersByDate) {
   if (!near) throw new Error('no course-search call seen on the GolfNow area page');
   dbg('near-me call:', near.method, near.url, 'body keys:', near.body ? Object.keys(near.body).join(',') : '(none)');
   let nb = near.body;
-  if (nb) { for (const [k, v] of Object.entries({ Latitude: CENTER.lat, Longitude: CENTER.lng, Radius: RADIUS, PageSize: 500, PageNumber: 0 })) if (k in nb) nb[k] = v; }
+  if (nb) { const setk = (name, v) => { const k = Object.keys(nb).find(x => x.toLowerCase() === name); if (k) nb[k] = v; };
+    setk('latitude', CENTER.lat); setk('longitude', CENTER.lng); setk('radius', RADIUS); setk('pagesize', 500); setk('pagenumber', 0); setk('teetimecount', 1); }
   const nj = await replay(p, near, nb);
   if (DEBUG) dbg('near-me response:', JSON.stringify(nj).slice(0, 1500));
   const facs = new Map();
@@ -148,7 +149,8 @@ async function readGolfNow(browser, dates, playersByDate) {
   const playersKey = Object.keys(tpl.body).find(k => /^players$/i.test(k));
   let firstDump = true;
   for (const date of dates) for (const f of list) {
-    const body = { ...tpl.body, [idKey]: f.id, [dateKey]: gnDate(date).replace(/\+/g, ' '), PageSize: 200, PageNumber: 0 };
+    const body = { ...tpl.body, [idKey]: f.id, [dateKey]: gnDate(date).replace(/\+/g, ' ') };
+    for (const [k, v] of [['pagesize', 200], ['pagenumber', 0], ['teetimecount', 200]]) { const kk = Object.keys(body).find(x => x.toLowerCase() === k); if (kk) body[kk] = v; }
     if (playersKey) body[playersKey] = typeof tpl.body[playersKey] === 'number' ? playersByDate[date] : String(playersByDate[date]);
     if ('TimeMin' in body) body.TimeMin = 10; if ('TimeMax' in body) body.TimeMax = 42;
     let j; try { j = await replay(p, tpl, body); } catch (e) { dbg(f.name, e.message); continue; }
