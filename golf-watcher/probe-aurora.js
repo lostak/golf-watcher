@@ -15,12 +15,14 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
   for (const url of ['https://www.golfaurora.com/', 'https://www.auroragov.org/things_to_do/recreation___sports_programs/golf']) {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 40000 }); await sleep(5000);
-      const links = await page.evaluate(() => [...document.querySelectorAll('a[href],iframe[src]')].map(a => (a.innerText || '').trim().slice(0, 30) + ' => ' + (a.href || a.src)).filter(h => /tee|book|reserv/i.test(h)));
+      const links = await page.evaluate(() => [...document.querySelectorAll('a[href],iframe[src]')].map(a => (a.innerText || '').trim().slice(0, 30) + ' => ' + (a.href || a.src)).filter(h => /tee.?time|book.?(a|your|now)|reserv/i.test(h) || !/auroragov\.org|civiclive|javascript:|mailto:|tel:|facebook|twitter|instagram|youtube|google|linkedin/i.test(h.split(' => ')[1] || '')));
       console.log(`\n=== ${url} (${await page.title()})\nbooking links:\n  ` + [...new Set(links)].slice(0, 20).join('\n  '));
     } catch (e) { console.log('ERR', url, e.message.split('\n')[0]); }
   }
   // follow the first booking link(s)
-  const links = [...new Set(await page.evaluate(() => [...document.querySelectorAll('a[href]')].map(a => a.href).filter(h => /tee|book/i.test(h) && !/mailto|tel:/.test(h))))].slice(0, 3);
+  await page.goto('https://www.golfaurora.com/', { waitUntil: 'domcontentloaded', timeout: 40000 }); await sleep(4000);
+  const links = [...new Set(await page.evaluate(() => [...document.querySelectorAll('a[href]')].filter(a => /tee.?time|book/i.test((a.innerText || '') + ' ' + a.href) && !/committee|event|facility|rental|mailto|tel:/i.test(a.href)).map(a => a.href)))].slice(0, 4);
+  console.log('\nfollowing:', links);
   for (const l of links) {
     seen.length = 0;
     try { await page.goto(l, { waitUntil: 'domcontentloaded', timeout: 40000 }); await sleep(12000); console.log(`\n=== followed ${l} -> ${page.url()} (${await page.title()})`); console.log(seen.slice(0, 40).join('\n')); }
