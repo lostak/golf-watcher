@@ -103,13 +103,8 @@ async function readMemberSports(browser, site, dates) {
 }
 
 // ---------- GolfNow: every course within the radius ----------
-const GN_EXTRA = [
-  { id: 1504170, name: 'Murphy Creek Golf Course', slug: '1504170-murphy-creek-golf-course' },
-  { id: 1050557, name: 'Saddle Rock Golf Course', slug: '1050557-saddle-rock-golf-course' },
-  { id: 1027964, name: 'Meadow Hills Golf Course', slug: '1027964-meadow-hills-golf-course' },
-  { id: 1027880, name: 'Aurora Hills Golf Course', slug: '1027880-aurora-hills-golf-course' },
-  { id: 1028001, name: 'Springhill Golf Course', slug: '1028001-springhill-golf-course' },
-];
+const GN_EXTRA = [17876, 17877, 17878, 17879, 17880, 17881, 17882, 17883, 17884, 17885, 17886]
+  .map(id => ({ id, name: 'GN ' + id, slug: String(id), probe: true }));
 // 1) the area-search page's own "courses-near-me" call gives the list of facilities (id, name, location);
 // 2) a facility page's own "tee-time-results" call gives the request template, replayed per facility and date.
 function walk(x, fn, depth = 0) { if (!x || typeof x !== 'object' || depth > 6) return; fn(x); for (const v of Object.values(x)) walk(v, fn, depth + 1); }
@@ -160,7 +155,7 @@ async function readGolfNow(browser, dates, playersByDate) {
   });
   // Aurora's city courses don't come back from the area search, so add them by facility id.
   for (const f of GN_EXTRA) if (![...facs.values()].some(x => x.id === f.id)) facs.set(f.id, f);
-  let list = [...facs.values()].filter(f => wanted(f.name));
+  let list = [...facs.values()].filter(f => f.probe || wanted(f.name));
   if (list.some(f => f.lat && f.lng)) list = list.filter(f => !(f.lat && f.lng) || miles(CENTER, f) <= RADIUS + 1);
   log(`GolfNow: ${list.length} courses within ${RADIUS} mi: ${list.map(f => f.name).sort().join(', ') || '(none)'}`);
   if (!list.length) { await p.close(); return found; }
@@ -181,7 +176,7 @@ async function readGolfNow(browser, dates, playersByDate) {
     let j; try { j = await replay(p, tpl, body); } catch (e) { dbg(f.name, e.message); continue; }
     if (DEBUG && firstDump) { dbg('tee-sheet response sample:', JSON.stringify(j).slice(0, 1200)); firstDump = false; }
     const tts = (j.ttResults && j.ttResults.teeTimes) || j.teeTimes || [];
-    dbg(`${f.name} ${date}: ${tts.length} tee times`);
+    dbg(`${f.name} ${date}: ${tts.length} tee times${f.probe && tts[0] && tts[0].facility ? ' = ' + tts[0].facility.name + ' / ' + (tts[0].facility.address || {}).city : ''}`);
     for (const t of tts) {
       const min = gnMinutes(t); if (min == null) continue;
       const rate = t.displayRate != null ? t.displayRate : (t.minTeeTimeRate && t.minTeeTimeRate.value);
