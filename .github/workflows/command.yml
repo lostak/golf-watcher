@@ -36,3 +36,4 @@ jobs:
             gh workflow run golf-watch.yml -R "$GITHUB_REPOSITORY" --ref main
           fi
           [ "${{ steps.cmd.outputs.report }}" = "yes" ] && gh workflow run daily-report.yml -R "$GITHUB_REPOSITORY" --ref main || true
+# schedule registered by lostak

@@ -25,3 +25,4 @@ jobs:
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
           git add state/ && (git diff --cached --quiet || (git commit -m "golf watcher: daily report" && git pull --rebase -q -X theirs && git push))
+# schedule registered by lostak

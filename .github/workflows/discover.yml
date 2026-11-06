@@ -12,3 +12,4 @@ jobs:
         with: { node-version: 20 }
       - run: npm install --no-audit --no-fund
       - run: node discover.js
+# schedule registered by lostak

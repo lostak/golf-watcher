@@ -14,3 +14,4 @@ jobs:
         run: |
           gh workflow enable golf-watch.yml -R "$GITHUB_REPOSITORY"
           gh workflow run golf-watch.yml -R "$GITHUB_REPOSITORY" --ref main
+# schedule registered by lostak

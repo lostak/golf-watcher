@@ -61,3 +61,4 @@ jobs:
         run: |
           left=$(( 300 - ($(date +%s) - ${{ steps.t0.outputs.t }}) )); [ "$left" -gt 0 ] && sleep "$left"
           gh workflow run tick.yml -R "$GITHUB_REPOSITORY" --ref main
+# schedule registered by lostak

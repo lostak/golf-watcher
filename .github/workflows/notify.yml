@@ -36,3 +36,4 @@ jobs:
               console.log("channel:", e.CHANNEL, "slack:", s, "discord:", d);
               if (s.startsWith("failed") || d.startsWith("failed")) process.exit(1);
             })();'
+# schedule registered by lostak
