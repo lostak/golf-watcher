@@ -6,23 +6,5 @@
   },
   "radiusMiles": 40,
   "exclude": "Par 3|Par-3|Footgolf|Back Nine|Front Nine|Back 9|Front 9|9 Hole|Executive",
-  "wants": [
-    {
-      "date": "2026-11-08",
-      "from": "05:00",
-      "to": "21:00",
-      "players": 2,
-      "courses": [
-        "Kennedy (Babe Lind / West)",
-        "Kennedy (Creek 9 only)",
-        "Kennedy (West / Babe Lind)"
-      ]
-    },
-    {
-      "date": "2026-11-08",
-      "from": "14:00",
-      "to": "17:00",
-      "players": 2
-    }
-  ]
+  "wants": []
 }
