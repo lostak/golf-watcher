@@ -60,5 +60,11 @@ jobs:
         env: { GH_TOKEN: '${{ github.token }}' }
         run: |
           left=$(( 300 - ($(date +%s) - ${{ steps.t0.outputs.t }}) )); [ "$left" -gt 0 ] && sleep "$left"
-          gh workflow run tick.yml -R "$GITHUB_REPOSITORY" --ref main
+          # GitHub sometimes answers a dispatch with a 500 (that broke the chain on Nov 8); retry, then clear a run stuck in "queued"
+          for i in 1 2 3 4 5; do
+            gh workflow run tick.yml -R "$GITHUB_REPOSITORY" --ref main && exit 0
+            echo "dispatch failed (try $i) – retrying"; sleep $((i * 20))
+            for id in $(gh run list -R "$GITHUB_REPOSITORY" -w tick.yml -s queued --json databaseId,createdAt -q '.[] | select((now - (.createdAt | fromdate)) > 600) | .databaseId'); do gh run cancel "$id" -R "$GITHUB_REPOSITORY" || true; done
+          done
+          exit 1
 # schedule registered by lostak
