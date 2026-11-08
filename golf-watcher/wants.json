@@ -9,8 +9,8 @@
   "wants": [
     {
       "date": "2026-11-08",
-      "from": "07:00",
-      "to": "11:00",
+      "from": "05:00",
+      "to": "21:00",
       "players": 2,
       "courses": [
         "Kennedy (Babe Lind / West)",

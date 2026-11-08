@@ -4,6 +4,7 @@
 //
 // Things Bradley can post:
 //   watch Sat 7-11 for 4                        → all courses, Saturday 7:00–11:00, 4 players
+//   watch Sun at Kennedy                        → no times given = all day (daylight only)
 //   watch Sat and Sun morning for 2 at Murphy Creek, Meadow Hills
 //   tee time Nov 14 7:30-10 for 3 at Wellshire
 //   stop Sat   /   stop all                       → remove those wants
@@ -43,14 +44,16 @@ function parseDates(text) {
   function nextOf(mo, d) { const y = +t.slice(0, 4); let s = `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`; if (s < t) s = `${y + 1}` + s.slice(4); return s; }
   return [...new Set(out)].filter(d => d >= t).sort();
 }
+const ALL_DAY = ['05:00', '21:00'];
+const win = (from, to) => (from === ALL_DAY[0] && to === ALL_DAY[1] ? 'all day' : `${fmt(from)}–${fmt(to)}`);
 function parseWindow(text) {
   const t = text.toLowerCase();
   if (/\bmorning\b/.test(t)) return ['07:00', '11:00'];
   if (/\bafternoon\b/.test(t)) return ['12:00', '16:00'];
   if (/\btwilight\b|\bevening\b/.test(t)) return ['15:00', '19:00'];
-  if (/\ball day\b|\banytime\b/.test(t)) return ['06:00', '19:00'];
+  if (/\ball day\b|\banytime\b/.test(t)) return ALL_DAY;
   const m = t.match(/\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:-|–|to|until|till|and)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b/);
-  if (!m) return ['07:00', '11:00'];
+  if (!m) return ALL_DAY;                                             // no times given → watch all day (the watcher keeps to daylight)
   let h1 = +m[1], h2 = +m[4];
   if (m[3] === 'pm' && h1 < 12) h1 += 12; if (m[6] === 'pm' && h2 < 12) h2 += 12;
   if (!m[3] && !m[6] && h1 <= 5) { h1 += 12; h2 += 12; }          // "1-4" means afternoon
@@ -119,7 +122,7 @@ async function reply(text) {
     const before = cfg.wants.length;
     if (/^(list|status|what.*watch)/.test(t)) {
       const open = cfg.wants.filter(w => w.date >= today());
-      await reply(open.length ? 'Watching: ' + open.map(w => `${nice(w.date)} ${fmt(w.from)}–${fmt(w.to)} for ${w.players}${w.courses ? ' at ' + w.courses.join(', ') : ''}`).join(' · ') + (gcal.ready ? courseLabel() : '') : 'Not watching any days. Post "watch Sat 7-11 for 4" to start.');
+      await reply(open.length ? 'Watching: ' + open.map(w => `${nice(w.date)} ${win(w.from, w.to)} for ${w.players}${w.courses ? ' at ' + w.courses.join(', ') : ''}`).join(' · ') + (gcal.ready ? courseLabel() : '') : 'Not watching any days. Post "watch Sat 7-11 for 4" to start.');
       continue;
     }
     if (/^report\b/.test(t)) { report = true; await reply('Posting the golf report in a few minutes.'); continue; }
@@ -135,7 +138,7 @@ async function reply(text) {
       else { const ds = parseDates(text); cfg.wants = cfg.wants.filter(w => !ds.includes(w.date)); if (!ds.length) { await reply('Which day? e.g. "stop Sat" or "stop all".'); continue; } }
       cfg.wants = cfg.wants.filter(w => w.date >= today());
       changed = changed || cfg.wants.length !== before;
-      await reply(cfg.wants.length ? 'Stopped. Still watching: ' + cfg.wants.map(w => `${nice(w.date)} ${fmt(w.from)}–${fmt(w.to)} for ${w.players}`).join(' · ') : 'Stopped. Not watching any days now.');
+      await reply(cfg.wants.length ? 'Stopped. Still watching: ' + cfg.wants.map(w => `${nice(w.date)} ${win(w.from, w.to)} for ${w.players}`).join(' · ') : 'Stopped. Not watching any days now.');
       continue;
     }
     const dates = parseDates(text);
@@ -149,7 +152,7 @@ async function reply(text) {
     if (gcal.ready) for (const c of courses) if (!courseList.some(k => k.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(k.toLowerCase().replace(/\s*\(.*\)$/, '')))) courseList.push(c);
     cfg.wants = cfg.wants.filter(w => w.date >= today()).sort((a, b) => a.date.localeCompare(b.date) || a.from.localeCompare(b.from));
     changed = true;
-    await reply(`Got it – watching ${dates.map(nice).join(', ')} ${fmt(from)}–${fmt(to)} for ${players}${gcal.ready ? courseLabel() : courses.length ? ' at ' + courses.join(', ') : ' at every public course within 40 miles'}. I check every 5 minutes, 5 AM–10 PM, and post here the moment something opens.`);
+    await reply(`Got it – watching ${dates.map(nice).join(', ')} ${win(from, to)} for ${players}${gcal.ready ? courseLabel() : courses.length ? ' at ' + courses.join(', ') : ' at every public course within 40 miles'}. I check every 5 minutes, 5 AM–10 PM, and post here the moment something opens.`);
   }
   fs.mkdirSync('state', { recursive: true });
   if (!TEXT) fs.writeFileSync(STATE, JSON.stringify(st));
