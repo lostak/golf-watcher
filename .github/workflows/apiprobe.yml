@@ -1,0 +1,15 @@
+name: apiprobe
+# Manual: capture each tee-sheet site's API call and test it as plain HTTP (for the standalone phone app).
+on: { workflow_dispatch: {} }
+permissions: {}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm install --no-audit --no-fund
+      - run: node apiprobe.js
