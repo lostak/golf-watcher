@@ -20,7 +20,7 @@ jobs:
         with: { node-version: 20 }
       - run: npm install --no-audit --no-fund
       - run: node watch.js --report ${{ inputs.daily && '--daily' || '' }} ${{ inputs.dry && '--dry' || '' }} ${{ inputs.debug && '--debug' || '' }}
-        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
+        env: { DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
       - if: ${{ !inputs.dry }}
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com

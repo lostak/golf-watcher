@@ -17,7 +17,7 @@ const TZ = 'America/Denver';
 const WANTS = 'wants.json', STATE = 'state/discord.json', COURSES = 'state/courses.json';
 // secrets pasted from a clipboard can carry a line break or a second copy – keep the first word only
 const one = v => String(v || '').split(/\s+/).filter(Boolean)[0] || '';
-const token = one(process.env.DISCORD_BOT_TOKEN), channel = one(process.env.DISCORD_CHANNEL_ID), hook = one(process.env.DISCORD_WEBHOOK_URL), slackHook = one(process.env.SLACK_WEBHOOK_URL);
+const token = one(process.env.DISCORD_BOT_TOKEN), channel = one(process.env.DISCORD_CHANNEL_ID), hook = one(process.env.DISCORD_WEBHOOK_URL);
 const TEXT = (() => { const i = process.argv.indexOf('--text'); return i > -1 ? process.argv[i + 1] : null; })();   // one command passed in (from Pocket via Claude) instead of reading Discord
 if (!TEXT && (!token || !channel)) { console.log('DISCORD_BOT_TOKEN / DISCORD_CHANNEL_ID not set – skipping.'); process.exit(0); }
 
@@ -88,7 +88,6 @@ async function discord(path, opts = {}) {
 async function reply(text) {
   console.log('reply:', text);
   if (hook) await fetch(hook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content: text.slice(0, 1990) }) });
-  if (TEXT && slackHook) await fetch(slackHook, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });   // a Pocket request also gets its answer in Slack
 }
 
 (async () => {

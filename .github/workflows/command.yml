@@ -1,7 +1,7 @@
 name: command
 # One command from outside Discord (Claude's Pocket processor runs this when Bradley says it into Pocket):
 #   gh workflow run command.yml -R lostak/golf-watcher --ref main -f text="watch Sat 7-11 for 4 at Murphy Creek"
-# Same grammar as the Discord channel; the answer is posted to Discord and Slack.
+# Same grammar as the Discord channel; the answer is posted to Discord.
 on:
   workflow_dispatch:
     inputs:
@@ -21,7 +21,6 @@ jobs:
           DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}'
           GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
           GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
-          SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}'
         run: |
           set +e; node commands.js --text "$TEXT"; rc=$?; set -e
           [ "$rc" = "3" ] && echo "changed=yes" >> "$GITHUB_OUTPUT"

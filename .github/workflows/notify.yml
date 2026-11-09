@@ -1,17 +1,13 @@
 name: notify
-# Relay: Claude's scheduled tasks run this to post a message to Bradley's Slack DM and a Discord channel. Secrets stay here.
-#   gh workflow run notify.yml -R lostak/golf-watcher --ref main -f channel=general -f text="$(cat /tmp/msg.txt)"
-# channel=golf → Slack DM + this repo's Discord golf channel. ANY other channel (general, none, …) → Slack DM only:
-# the shared Discord channels never get personal content. Picks post through lostak/my-life; powder and game prices
-# through their own repos.
-# channel=none posts to Slack only; slack=false posts to Discord only (for shared channels where the wording must not be personal).
-# Powder and game-price messages use the same relay in lostak/powder-report and lostak/game-price-watcher.
+# Relay for Claude's scheduled tasks (Slack is retired):
+#   gh workflow run notify.yml -R lostak/golf-watcher --ref main -f channel=golf -f text="$(cat /tmp/msg.txt)"
+# channel=golf → the Discord golf channel. Any other personal channel (general, powder, …) → Bradley's Discord DMs
+# from the bot (never a shared channel). channel=none (work) → nowhere: work content never goes to Discord.
 on:
   workflow_dispatch:
     inputs:
-      text: { description: 'Message (Slack markdown: *bold*; newlines allowed)', required: true, type: string }
-      channel: { description: 'golf (Slack + Discord golf) | anything else = Slack only', required: false, default: 'none', type: string }
-      slack: { description: 'Also post to Slack', required: false, default: true, type: boolean }
+      text: { description: 'Message (*bold* becomes Discord bold; newlines allowed)', required: true, type: string }
+      channel: { description: 'golf = golf channel | none = drop (work) | anything else = Bradley''s DMs', required: false, default: 'dm', type: string }
 permissions: {}
 jobs:
   send:
@@ -21,19 +17,19 @@ jobs:
       - env:
           TEXT: '${{ inputs.text }}'
           CHANNEL: '${{ inputs.channel }}'
-          SLACK_ON: '${{ inputs.slack }}'
-          SLACK: '${{ secrets.SLACK_WEBHOOK_URL }}'
           DISCORD_WEBHOOK_GOLF: '${{ secrets.DISCORD_WEBHOOK_URL }}'
+          TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
+          CH: '${{ secrets.DISCORD_CHANNEL_ID }}'
         run: |
           node -e '
-            const e = process.env, text = e.TEXT || "";
-            const discord = (e.CHANNEL || "").toLowerCase() === "golf" ? e.DISCORD_WEBHOOK_GOLF : null;   // everything else is Slack-only
-            const slack = e.SLACK_ON === "false" ? null : e.SLACK;
-            const post = async (url, body) => { if (!url) return "skipped"; const r = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); return r.ok ? "ok" : "failed " + r.status; };
+            const e = process.env, ch = (e.CHANNEL || "dm").toLowerCase(), one = v => String(v || "").split(/\s+/).filter(Boolean)[0] || "";
+            const content = (e.TEXT || "").replace(/\*([^*\n]+)\*/g, "**$1**").slice(0, 1990);
+            const api = async (m, p, b) => { const r = await fetch("https://discord.com/api/v10" + p, { method: m, headers: { Authorization: "Bot " + one(e.TOKEN), "Content-Type": "application/json" }, body: b ? JSON.stringify(b) : undefined }); if (!r.ok) throw new Error(p + " " + r.status); return r.json(); };
             (async () => {
-              const s = await post(slack, { text });
-              const d = await post(discord, { content: text.replace(/\*([^*\n]+)\*/g, "**$1**").slice(0, 1990) });
-              console.log("channel:", e.CHANNEL, "slack:", s, "discord:", d);
-              if (s.startsWith("failed") || d.startsWith("failed")) process.exit(1);
-            })();'
-# schedule registered by lostak
+              if (ch === "none") return console.log("work message: not sent anywhere");
+              if (ch === "golf") { const r = await fetch(e.DISCORD_WEBHOOK_GOLF, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content }) }); if (!r.ok) throw new Error("golf " + r.status); return console.log("golf: ok"); }
+              const g = await api("GET", "/channels/" + one(e.CH)), owner = (await api("GET", "/guilds/" + g.guild_id)).owner_id;
+              const dm = await api("POST", "/users/@me/channels", { recipient_id: owner });
+              await api("POST", "/channels/" + dm.id + "/messages", { content, allowed_mentions: { parse: [] } });
+              console.log("dm: ok");
+            })().catch(x => { console.error(x.message); process.exit(1); });'

@@ -4,7 +4,7 @@ name: golf-watch
 on:
   workflow_dispatch:
     inputs:
-      dry: { description: 'Dry run (read only, no Slack, no state)', type: boolean, default: false }
+      dry: { description: 'Dry run (read only, no Discord, no state)', type: boolean, default: false }
       debug: { description: 'Verbose log', type: boolean, default: false }
 concurrency: { group: golf-watch, cancel-in-progress: false }
 permissions: { contents: write }
@@ -34,7 +34,7 @@ jobs:
       # No browser download: the runner's own Google Chrome is used (chromium.launch({ channel: 'chrome' })).
       - if: steps.gate.outputs.run == 'yes'
         run: node watch.js ${{ inputs.dry && '--dry' || '' }} ${{ inputs.debug && '--debug' || '' }}
-        env: { SLACK_WEBHOOK_URL: '${{ secrets.SLACK_WEBHOOK_URL }}', DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
+        env: { DISCORD_WEBHOOK_URL: '${{ secrets.DISCORD_WEBHOOK_URL }}', GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}', GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}' }
       - name: Save seen list
         if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |

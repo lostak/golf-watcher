@@ -1,5 +1,5 @@
 // Golf tee-time watcher. Reads public tee sheets in a headless browser (never signs in, never books)
-// and posts to Slack when a new tee time fits a window in wants.json.
+// and posts to Discord when a new tee time fits a window in wants.json.
 //
 // Sources:
 //   - GolfNow area search: every course GolfNow lists within `radiusMiles` of `center` (most Denver-metro
@@ -245,12 +245,11 @@ async function readForeUp(browser, site, dates) {
   await p.close(); return found;
 }
 
-// Post to Slack (SLACK_WEBHOOK_URL) and Discord (DISCORD_WEBHOOK_URL) when set. Slack *bold* becomes Discord **bold**.
+// Post to Discord (DISCORD_WEBHOOK_URL). *bold* becomes Discord **bold**.
 async function notify(text) {
-  const slack = process.env.SLACK_WEBHOOK_URL, discord = process.env.DISCORD_WEBHOOK_URL;
-  if (!slack && !discord) throw new Error('SLACK_WEBHOOK_URL / DISCORD_WEBHOOK_URL not set');
+  const discord = process.env.DISCORD_WEBHOOK_URL;
+  if (!discord) throw new Error('DISCORD_WEBHOOK_URL not set');
   const post = async (url, body, name) => { if (!url) return; const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!r.ok) throw new Error(name + ' post failed ' + r.status); };
-  await post(slack, { text }, 'Slack');
   await post(discord, { content: text.replace(/\*([^*\n]+)\*/g, '**$1**').slice(0, 1990) }, 'Discord');
 }
 
