@@ -1,5 +1,5 @@
 name: golf-watch
-# Started by tick.yml every 5 minutes while a day is wanted (5 AM–10 PM), by Discord/Pocket commands, and by
+# Started by tick.yml every 5 minutes while a day is wanted (5 AM–10 PM), by Discord/Pocket commands, by the Tee Watch app, and by
 # changes to wants.json. No cron of its own.
 on:
   workflow_dispatch:
@@ -39,5 +39,5 @@ jobs:
         if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
-          git add state/seen.json && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list" && git pull --rebase -q -X theirs && git push))
+          git add state/ && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list + app state" && git pull --rebase -q -X theirs && git push))
 # schedule registered by lostak

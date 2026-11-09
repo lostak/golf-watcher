@@ -1,0 +1,24 @@
+name: android
+# Compile check for the Tee Watch app (android/): builds a debug APK on every change and keeps it as a run artifact.
+# The signed build for installing / Google Play is made elsewhere – the signing key never goes in this public repo.
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+concurrency: { group: android, cancel-in-progress: true }
+permissions: { contents: read }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: '8.10.2' }
+      - working-directory: android
+        run: gradle --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with: { name: TeeWatch-debug, path: android/app/build/outputs/apk/debug/app-debug.apk }

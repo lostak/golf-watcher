@@ -263,6 +263,7 @@ async function launch() {
   // Source of truth: the silent "Personal: golf watch" calendar event (COURSE:/WANT: lines) that the app, Pocket and Discord write.
   // wants.json's "wants" list is only the fallback when the calendar isn't configured.
   let golfEv = null;
+  const fileWants = (cfg.wants || []).map(w => ({ ...w, source: 'app' }));   // the Tee Watch app edits wants.json directly
   if (gcal.ready) {
     try {
       golfEv = await gcal.findByTitle('Personal: golf watch', 'golf watch');
@@ -273,11 +274,18 @@ async function launch() {
         if (courses.length) INCLUDE = courseRe(courses);
         log(`Calendar golf watch: ${cfg.wants.length} want(s), ${courses.length ? courses.length + ' course(s): ' + courses.join(', ') : 'all courses'}`);
       } else { log('Calendar: no "Personal: golf watch" event yet.'); cfg.wants = []; }
-    } catch (e) { log('Calendar read failed (' + e.message.slice(0, 120) + '); using wants.json'); }
-  }
+    } catch (e) { log('Calendar read failed (' + e.message.slice(0, 120) + '); using wants.json'); cfg.wants = []; }
+    cfg.wants = [...cfg.wants.map(w => ({ ...w, source: 'calendar' })), ...fileWants];
+  } else cfg.wants = fileWants;
   const wants = cfg.wants.filter(w => w.date >= today);
+  // state/app.json: what the Tee Watch app shows (public: wants, open tee times that fit them, the daily report, last check)
+  const APP = 'state/app.json';
+  const appState = (() => { try { return JSON.parse(fs.readFileSync(APP, 'utf8')); } catch { return {}; } })();
+  const saveApp = extra => { fs.mkdirSync('state', { recursive: true }); fs.writeFileSync(APP, JSON.stringify({ ...appState, ...extra,
+    wants: wants.map(({ date, from, to, players, courses, source }) => ({ date, from, to, players, courses: courses || undefined, source })),
+    courseFilter: INCLUDE ? INCLUDE.source : null, center: CENTER, radiusMiles: RADIUS, updated: new Date().toISOString() }, null, 1)); };
   if (DAILY) { try { if (JSON.parse(fs.readFileSync('state/report.json', 'utf8')).date === today) { log('Daily report already posted today.'); return; } } catch {} }
-  if (!wants.length && !REPORT) { log('No upcoming wants.'); return; }
+  if (!wants.length && !REPORT) { log('No upcoming wants.'); if (!DRY) saveApp({ found: [] }); return; }
   const addDays = (d, n) => { const x = new Date(d + 'T12:00:00Z'); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
   // report mode looks at today, tomorrow and the coming weekend; watch mode at the wanted days
   const reportDates = [...new Set([today, addDays(today, 1), ...[1, 2, 3, 4, 5, 6, 7].map(n => addDays(today, n)).filter(d => [0, 6].includes(new Date(d + 'T12:00:00Z').getUTCDay()))])].sort();
@@ -314,6 +322,9 @@ async function launch() {
     if (!DRY) await notify(msg);
     fs.mkdirSync('state', { recursive: true });
     fs.writeFileSync('state/report.json', JSON.stringify({ date: today, at: new Date().toISOString() }));
+    const rep = {}; for (const d of dates) { const byCourse = {}; for (const f of daylight.filter(f => f.date === d)) if (!byCourse[f.course] || f.min < byCourse[f.course].min) byCourse[f.course] = f;
+      rep[d] = Object.values(byCourse).sort((a, b) => a.min - b.min).slice(0, 25).map(({ min, course, spots, price, link }) => ({ min, course, spots, price, link })); }
+    if (!DRY) saveApp({ report: { date: today, days: rep } });
     if (all.length) fs.writeFileSync('state/courses.json', JSON.stringify([...new Set(all.map(f => f.course))].sort(), null, 1));
     return;
   }
@@ -325,6 +336,10 @@ async function launch() {
     if (ok) matches.push(f);
   }
   matches.sort((a, b) => a.date.localeCompare(b.date) || a.min - b.min);
+  const fits = all.filter(f => windowsFor(f.date).some(w => f.min >= w.from && f.min <= w.to && f.spots >= w.players && (!w.courses || w.courses.test(f.course))))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.min - b.min);
+  if (!DRY) saveApp({ checked: new Date().toISOString(), found: fits.slice(0, 120).map(({ date, min, course, spots, price, link, key }) => ({ date, min, course, spots, price, link, key })),
+    errors: errors.map(e => e.split(':')[0]) });
   log(`read ${all.length} tee times; ${matches.length} new match(es); errors: ${errors.join('; ') || 'none'}`);
   for (const m of matches) log(`  ${m.date} ${fmt(m.min)} ${m.course} ${m.spots} spots${m.price != null ? ' $' + m.price : ''}`);
 

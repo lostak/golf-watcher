@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TeeWatch" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">#0E1A14</item>
+        <item name="android:statusBarColor">#0E1A14</item>
+        <item name="android:navigationBarColor">#0E1A14</item>
+    </style>
+    <color name="ic_bg">#16583A</color>
+</resources>
