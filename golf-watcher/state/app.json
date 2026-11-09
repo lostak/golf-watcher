@@ -1,0 +1,11 @@
+{
+ "found": [],
+ "wants": [],
+ "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock",
+ "center": {
+  "lat": 39.7294,
+  "lng": -104.8319
+ },
+ "radiusMiles": 40,
+ "updated": "2026-11-09T21:26:30.869Z"
+}
