@@ -41,7 +41,7 @@ jobs:
       - name: Save cursor / wants
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
-          git add state/discord.json state/watchdog.json wants.json 2>/dev/null; git diff --cached --quiet || (git commit -q -m "tick: discord state" && git pull --rebase -q -X theirs && git push -q) || true
+          git add state/ wants.json 2>/dev/null; git diff --cached --quiet || (git commit -q -m "tick: discord state" && git pull --rebase -q -X theirs && git push -q) || true
       - name: Start what's due
         env:
           GH_TOKEN: '${{ github.token }}'
