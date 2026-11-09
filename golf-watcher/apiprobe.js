@@ -26,11 +26,11 @@ const red = h => Object.fromEntries(Object.entries(h).filter(([k]) => !/^(cookie
     });
     try { await p.goto(url, { waitUntil: 'networkidle', timeout: 60000 }); } catch (e) { console.log('goto: ' + e.message.split('\n')[0]); }
     await p.waitForTimeout(6000);
-    for (const c of calls.filter(c => /json/.test(c.t.slice(0, 1)) || /^[\[{]/.test(c.t.trim())).slice(0, 8)) {
+    for (const c of calls.filter(c => /courses-near-me|tee-time-search-results|onlineBookingTeeTimes|teetimes\?/i.test(c.u)).slice(0, 4)) {
       console.log(`--- ${c.m} ${c.u.slice(0, 260)} → ${c.s} (${c.t.length}b)`);
       console.log('    headers ' + JSON.stringify(c.h).slice(0, 700));
-      if (c.b) console.log('    body ' + c.b.slice(0, 700));
-      console.log('    resp ' + c.t.slice(0, 500).replace(/\s+/g, ' '));
+      if (c.b) console.log('    body ' + c.b.slice(0, 2000));
+      console.log('    resp ' + c.t.slice(0, 3500).replace(/\s+/g, ' '));
       // plain HTTP replay: browser headers minus cookies, then a minimal set
       for (const [label, headers] of [['replay', c.h], ['minimal', { 'User-Agent': UA, Accept: 'application/json', ...(c.b ? { 'Content-Type': c.h['content-type'] || 'application/json' } : {}), ...Object.fromEntries(Object.entries(c.h).filter(([k]) => /^x-|authorization|api-?key/i.test(k))) }]]) {
         try { const r = await fetch(c.u, { method: c.m, headers, body: c.b || undefined }); const t = await r.text();
