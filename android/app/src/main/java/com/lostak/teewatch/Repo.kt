@@ -20,7 +20,7 @@ data class Tee(val date: String, val min: Int, val course: String, val spots: In
 data class AppState(
     val updated: String?, val checked: String?, val wants: List<Want>, val found: List<Tee>,
     val reportDate: String?, val report: Map<String, List<Tee>>, val errors: List<String>,
-    val radiusMiles: Int?, val center: Pair<Double, Double>?,
+    val radiusMiles: Int?, val center: Pair<Double, Double>?, val courseFilter: String?,
 )
 data class FileWants(val json: JSONObject, val sha: String?)
 
@@ -134,7 +134,7 @@ class Repo(private val prefs: Prefs) {
             val c = j.optJSONObject("center")
             return AppState(j.optString("updated").ifEmpty { null }, j.optString("checked").ifEmpty { null }, wants, found,
                 rep?.optString("date"), report, errs, if (j.has("radiusMiles")) j.optInt("radiusMiles") else null,
-                c?.let { it.optDouble("lat") to it.optDouble("lng") })
+                c?.let { it.optDouble("lat") to it.optDouble("lng") }, j.optString("courseFilter").takeIf { it.isNotBlank() && it != "null" })
         }
     }
 }

@@ -142,7 +142,7 @@ fun App(prefs: Prefs) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("${niceDate(w.date)} · ${windowText(w.from, w.to)}", color = Ink, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                            Text("${w.players} player${if (w.players == 1) "" else "s"}" + (if (w.courses.isNotEmpty()) " · " + w.courses.joinToString() else " · any course") +
+                            Text("${w.players} player${if (w.players == 1) "" else "s"}" + (if (w.courses.isNotEmpty()) " · " + w.courses.joinToString() else st?.courseFilter?.let { " · " + it.replace("|", ", ") } ?: " · any course") +
                                 (if (w.source == "calendar") " · from your calendar" else ""), color = Mute, fontSize = 13.sp)
                         }
                         if (w.source != "calendar" && tokenSet) TextButton(onClick = { act("Stopped watching ${niceDate(w.date)}") { repo.removeWant(w) } }, enabled = !busy) { Text("Remove", color = Warn) }
