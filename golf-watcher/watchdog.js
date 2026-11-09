@@ -2,12 +2,12 @@
 // 6 AM and 10 PM Denver), and again when it's back. With --slate (game-price-watcher only, it has the calendar) it also
 // checks that the Claude betting-slate task posted today's slate by 7:10 AM.
 // Usage: node watchdog.js "owner/repo:workflow.yml,owner/repo:workflow.yml" [--slate]
-// Env: GITHUB_TOKEN, DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID (any channel in the server), optional DISCORD_OWNER_ID.
+// Env: GH_API_TOKEN, DISCORD_BOT_TOKEN, DISCORD_CHANNEL_ID (any channel in the server), optional DISCORD_OWNER_ID.
 // Copied into golf-watcher (which watches game-price-watcher), so the two cover each other.
 'use strict';
 const fs = require('fs');
 const one = v => String(v || '').split(/\s+/).filter(Boolean)[0] || '';
-const TOKEN = one(process.env.DISCORD_BOT_TOKEN), CHANNEL = one(process.env.DISCORD_CHANNEL_ID), GH = process.env.GITHUB_TOKEN;
+const TOKEN = one(process.env.DISCORD_BOT_TOKEN), CHANNEL = one(process.env.DISCORD_CHANNEL_ID), GH = process.env.GH_API_TOKEN || process.env.GITHUB_TOKEN;
 const STATE = 'state/watchdog.json', TZ = 'America/Denver';
 const targets = (process.argv[2] || '').split(',').map(s => s.trim()).filter(Boolean).map(s => { const [repo, wf] = s.split(':'); return { repo, wf }; });
 const hm = () => +new Date().toLocaleTimeString('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit' }).replace(':', '');

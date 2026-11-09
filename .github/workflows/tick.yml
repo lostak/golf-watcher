@@ -34,7 +34,7 @@ jobs:
           [ "$rc" = "0" ] || [ "$rc" = "3" ] || [ "$rc" = "4" ] || echo "::warning::commands.js exited $rc"
       - name: Watchdog (DMs Bradley if the game-price-watcher loop stops)
         env:
-          GITHUB_TOKEN: '${{ github.token }}'
+          GH_API_TOKEN: '${{ github.token }}'
           DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
           DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
         run: node watchdog.js "lostak/game-price-watcher:tick.yml" || echo "::warning::watchdog failed"
