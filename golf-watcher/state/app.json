@@ -7,5 +7,109 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-09T21:26:30.869Z"
+ "updated": "2026-11-10T14:17:44.692Z",
+ "report": {
+  "date": "2026-11-10",
+  "days": {
+   "2026-11-10": [
+    {
+     "min": 570,
+     "course": "Foothills 18",
+     "spots": 4,
+     "price": 44,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
+    },
+    {
+     "min": 610,
+     "course": "Evergreen",
+     "spots": 2,
+     "price": 38,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 680,
+     "course": "Saddle Rock Golf Course",
+     "spots": 2,
+     "price": 66,
+     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+10+2026&players=2"
+    },
+    {
+     "min": 700,
+     "course": "Willis Case",
+     "spots": 3,
+     "price": 59,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 880,
+     "course": "City Park",
+     "spots": 2,
+     "price": 28,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 880,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 28,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    }
+   ],
+   "2026-11-11": [
+    {
+     "min": 625,
+     "course": "Saddle Rock Golf Course",
+     "spots": 2,
+     "price": 66,
+     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+11+2026&players=2"
+    },
+    {
+     "min": 860,
+     "course": "Evergreen",
+     "spots": 4,
+     "price": 25,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    }
+   ],
+   "2026-11-14": [
+    {
+     "min": 850,
+     "course": "Evergreen",
+     "spots": 4,
+     "price": 32,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    }
+   ],
+   "2026-11-15": [
+    {
+     "min": 620,
+     "course": "Evergreen",
+     "spots": 2,
+     "price": 61,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 870,
+     "course": "Willis Case",
+     "spots": 4,
+     "price": 34,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 880,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 33,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 880,
+     "course": "Foothills 18",
+     "spots": 2,
+     "price": 48,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
+    }
+   ]
+  }
+ }
 }
