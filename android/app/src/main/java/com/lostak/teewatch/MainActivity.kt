@@ -100,7 +100,21 @@ fun App(prefs: Prefs) {
         try { withContext(Dispatchers.IO) { f() }; msg = done } catch (e: Exception) { msg = e.message ?: "That didn't work" }
         busy = false; load()
     }
-    LaunchedEffect(Unit) { load() }
+    // reload when the app comes back to the screen and every 5 minutes while it's open (ON_RESUME covers launch)
+    var lastLoad by remember { mutableLongStateOf(0L) }
+    val owner = androidx.compose.ui.platform.LocalLifecycleOwner.current
+    DisposableEffect(owner) {
+        val obs = androidx.lifecycle.LifecycleEventObserver { _, ev ->
+            if (ev == androidx.lifecycle.Lifecycle.Event.ON_RESUME && !busy && System.currentTimeMillis() - lastLoad > 60_000) { lastLoad = System.currentTimeMillis(); load() }
+        }
+        owner.lifecycle.addObserver(obs); onDispose { owner.lifecycle.removeObserver(obs) }
+    }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(60_000)
+            if (owner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED) && !busy && System.currentTimeMillis() - lastLoad > 5 * 60_000) { lastLoad = System.currentTimeMillis(); load() }
+        }
+    }
 
     val today = LocalDate.now().toString()
     val wants = ((st?.wants?.filter { it.source == "calendar" } ?: emptyList()) + (fileWants ?: st?.wants?.filter { it.source != "calendar" } ?: emptyList()))
