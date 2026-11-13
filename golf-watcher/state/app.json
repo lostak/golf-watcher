@@ -1,13 +1,31 @@
 {
- "found": [],
- "wants": [],
- "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock",
+ "found": [
+  {
+   "date": "2026-11-14",
+   "min": 600,
+   "course": "Saddle Rock Golf Course",
+   "spots": 4,
+   "price": 77,
+   "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+14+2026&players=4",
+   "key": "2026-11-14|Saddle Rock Golf Course|600"
+  }
+ ],
+ "wants": [
+  {
+   "date": "2026-11-14",
+   "from": "09:00",
+   "to": "10:00",
+   "players": 4,
+   "source": "calendar"
+  }
+ ],
+ "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock|Kennedy",
  "center": {
   "lat": 39.7294,
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-13T14:21:12.175Z",
+ "updated": "2026-11-13T18:27:56.802Z",
  "report": {
   "date": "2026-11-13",
   "days": {
@@ -67,5 +85,7 @@
     }
    ]
   }
- }
+ },
+ "checked": "2026-11-13T18:27:56.802Z",
+ "errors": []
 }
