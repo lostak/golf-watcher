@@ -39,5 +39,5 @@ jobs:
         if: steps.gate.outputs.run == 'yes' && !inputs.dry
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com
-          git add state/ && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list + app state" && git pull --rebase -q -X theirs && git push))
+          git add state/ && (git diff --cached --quiet || (git commit -m "golf watcher: update seen list + app state" && for i in 1 2 3 4; do git pull --rebase -q -X theirs && git push -q && break; sleep $((i*4)); done))
 # schedule registered by lostak
