@@ -1,21 +1,14 @@
 {
- "found": [
-  {
-   "date": "2026-11-14",
-   "min": 600,
-   "course": "Saddle Rock Golf Course",
-   "spots": 4,
-   "price": 77,
-   "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+14+2026&players=4",
-   "key": "2026-11-14|Saddle Rock Golf Course|600"
-  }
- ],
+ "found": [],
  "wants": [
   {
    "date": "2026-11-14",
    "from": "09:00",
    "to": "10:00",
    "players": 4,
+   "courses": [
+    "Kennedy"
+   ],
    "source": "calendar"
   }
  ],
@@ -25,7 +18,7 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-13T18:40:36.362Z",
+ "updated": "2026-11-13T18:43:45.458Z",
  "report": {
   "date": "2026-11-13",
   "days": {
@@ -86,6 +79,6 @@
    ]
   }
  },
- "checked": "2026-11-13T18:40:36.362Z",
+ "checked": "2026-11-13T18:43:45.458Z",
  "errors": []
 }
