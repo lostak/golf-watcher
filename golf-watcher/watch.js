@@ -17,7 +17,8 @@ const DEBUG = process.argv.includes('--debug') || process.env.DEBUG === '1';
 const TZ = cfg.timezone || 'America/Denver';
 const CENTER = cfg.center || { lat: 39.7294, lng: -104.8319 }; // Aurora, CO
 const RADIUS = cfg.radiusMiles || 30;
-let INCLUDE = cfg.courses ? new RegExp(cfg.courses, 'i') : null;     // optional: only these courses (the calendar's COURSE lines override this)
+let INCLUDE = cfg.courses ? new RegExp(cfg.courses, 'i') : null;     // which courses get read at all (general list + every want's own courses)
+let GLOBAL = INCLUDE;                                                  // the general course list (calendar COURSE lines) for wants that name no course
 const gcal = require('./gcal');                                        // Bradley's calendar is the source of truth when configured
 const courseKey = c => String(c).replace(/\s*\(.*\)\s*$/, '').replace(/\b(golf|course|club|the)\b/gi, '').trim();
 const courseRe = list => new RegExp(list.map(c => courseKey(c).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).filter(Boolean).join('|'), 'i');
@@ -73,9 +74,10 @@ function sun(dateStr) {
 function windowsFor(date) {
   const { rise, set } = sun(date);
   const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // A want that names courses ("… at Kennedy") matches ONLY those courses; a want with none uses the general course list.
   return cfg.wants.filter(w => w.date === date).map(w => ({
     from: Math.max(hm(w.from), rise), to: Math.min(hm(w.to), set - 120), players: w.players,
-    courses: w.courses && w.courses.length ? new RegExp(w.courses.map(esc).join('|'), 'i') : null }));   // optional per-want course filter
+    courses: w.courses && w.courses.length ? courseRe(w.courses) : GLOBAL }));
 }
 
 // ---------- MemberSports (Denver Golf, Foothills) ----------
@@ -270,14 +272,18 @@ async function launch() {
       if (golfEv) {
         const d = golfEv.description || '';
         const courses = [...d.matchAll(/^\s*COURSE:\s*(.+?)\s*$/gm)].map(m => m[1]);
-        cfg.wants = [...d.matchAll(/^\s*WANT:\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(\d)\s*players?/gim)].map(m => ({ date: m[1], from: m[2].padStart(5, '0'), to: m[3].padStart(5, '0'), players: +m[4] }));
-        if (courses.length) INCLUDE = courseRe(courses);
+        cfg.wants = [...d.matchAll(/^\s*WANT:\s*(\d{4}-\d{2}-\d{2})\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})\s+(\d)\s*players?(?:\s+(?:at|only)\s+(.+?))?\s*$/gim)]
+          .map(m => ({ date: m[1], from: m[2].padStart(5, '0'), to: m[3].padStart(5, '0'), players: +m[4], courses: m[5] ? m[5].split(/\s*[;,]\s*/).filter(Boolean) : undefined }));
+        if (courses.length) INCLUDE = GLOBAL = courseRe(courses);
         log(`Calendar golf watch: ${cfg.wants.length} want(s), ${courses.length ? courses.length + ' course(s): ' + courses.join(', ') : 'all courses'}`);
       } else { log('Calendar: no "Personal: golf watch" event yet.'); cfg.wants = []; }
     } catch (e) { log('Calendar read failed (' + e.message.slice(0, 120) + '); using wants.json'); cfg.wants = []; }
     cfg.wants = [...cfg.wants.map(w => ({ ...w, source: 'calendar' })), ...fileWants];
   } else cfg.wants = fileWants;
   const wants = cfg.wants.filter(w => w.date >= today);
+  // read every course any want needs: the general list plus each want's own courses
+  if (GLOBAL) { const own = wants.filter(w => w.courses && w.courses.length).flatMap(w => w.courses); if (own.length) INCLUDE = new RegExp(GLOBAL.source + '|' + courseRe(own).source, 'i'); }
+  if (wants.some(w => !(w.courses && w.courses.length)) === false && wants.length && !GLOBAL) INCLUDE = courseRe(wants.flatMap(w => w.courses));
   // state/app.json: what the Tee Watch app shows (public: wants, open tee times that fit them, the daily report, last check)
   const APP = 'state/app.json';
   const appState = (() => { try { return JSON.parse(fs.readFileSync(APP, 'utf8')); } catch { return {}; } })();
