@@ -370,7 +370,10 @@ async function launch() {
   }
   if (golfEv && !DRY) {                                                // housekeeping on the golf watch event: FOUND lines, LAST CHECKED, drop past days
     try {
-      const d = golfEv.description || '';
+      // re-read it now: this run took minutes, and the apps, Discord commands or Claude may have changed it meanwhile.
+      // Only FOUND / LAST CHECKED / past-day lines are this watcher's to change; everything else is kept as it is NOW.
+      const live = await gcal.get(golfEv.id).catch(() => null);
+      const d = (live && typeof live.description === 'string' ? live.description : golfEv.description) || '';
       const foundOld = [...d.matchAll(/^\s*FOUND:.*$/gm)].map(m => m[0].trim()).filter(l => (l.match(/\d{4}-\d{2}-\d{2}/) || [''])[0] >= today);
       const foundNew = matches.map(m => `FOUND: ${m.date} ${m.course} ${fmt(m.min)} ${m.spots} players${m.price != null ? ' $' + m.price : ''} ${m.link}`);
       const wantLines = [...d.matchAll(/^\s*WANT:.*$/gm)].map(m => m[0].trim()).filter(l => (l.match(/\d{4}-\d{2}-\d{2}/) || [''])[0] >= today);
