@@ -7,87 +7,50 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-12T14:21:49.758Z",
+ "updated": "2026-11-13T14:21:12.175Z",
  "report": {
-  "date": "2026-11-12",
+  "date": "2026-11-13",
   "days": {
-   "2026-11-12": [
-    {
-     "min": 570,
-     "course": "Foothills 18",
-     "spots": 4,
-     "price": 44,
-     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
-    },
-    {
-     "min": 680,
-     "course": "Evergreen",
-     "spots": 4,
-     "price": 39,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    }
-   ],
    "2026-11-13": [
     {
-     "min": 600,
-     "course": "Willis Case",
-     "spots": 2,
-     "price": 60,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
      "min": 630,
-     "course": "Saddle Rock Golf Course",
-     "spots": 2,
-     "price": 77,
-     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+13+2026&players=2"
-    },
-    {
-     "min": 640,
      "course": "Evergreen",
-     "spots": 2,
+     "spots": 4,
      "price": 39,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 710,
-     "course": "Foothills 18",
-     "spots": 2,
-     "price": 89,
-     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     }
    ],
    "2026-11-14": [
     {
-     "min": 655,
+     "min": 600,
      "course": "Saddle Rock Golf Course",
      "spots": 2,
      "price": 77,
      "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+14+2026&players=2"
     },
     {
-     "min": 880,
+     "min": 600,
+     "course": "Foothills 18",
+     "spots": 2,
+     "price": 89,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
+    },
+    {
+     "min": 610,
      "course": "Evergreen",
      "spots": 4,
-     "price": 32,
+     "price": 62,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 880,
-     "course": "Foothills 18",
-     "spots": 4,
-     "price": 48,
-     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
+     "course": "City Park",
+     "spots": 2,
+     "price": 34,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     }
    ],
    "2026-11-15": [
-    {
-     "min": 710,
-     "course": "Foothills 18",
-     "spots": 4,
-     "price": 89,
-     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
-    },
     {
      "min": 850,
      "course": "Evergreen",
@@ -96,18 +59,11 @@
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 860,
-     "course": "City Park",
-     "spots": 4,
-     "price": 34,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
      "min": 880,
-     "course": "Willis Case",
-     "spots": 4,
-     "price": 27,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+     "course": "Foothills 18",
+     "spots": 2,
+     "price": 36,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     }
    ]
   }
