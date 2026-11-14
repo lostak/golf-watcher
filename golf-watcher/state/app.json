@@ -18,44 +18,42 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-14T14:18:25.666Z",
+ "updated": "2026-11-14T14:18:47.710Z",
  "report": {
-  "date": "2026-11-13",
+  "date": "2026-11-14",
   "days": {
-   "2026-11-13": [
-    {
-     "min": 630,
-     "course": "Evergreen",
-     "spots": 4,
-     "price": 39,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    }
-   ],
    "2026-11-14": [
     {
-     "min": 600,
-     "course": "Saddle Rock Golf Course",
-     "spots": 2,
-     "price": 77,
-     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+14+2026&players=2"
-    },
-    {
-     "min": 600,
+     "min": 630,
      "course": "Foothills 18",
      "spots": 2,
      "price": 89,
      "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     },
     {
-     "min": 610,
+     "min": 685,
+     "course": "Saddle Rock Golf Course",
+     "spots": 2,
+     "price": 77,
+     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+14+2026&players=2"
+    },
+    {
+     "min": 820,
+     "course": "Kennedy (Creek 9 only)",
+     "spots": 4,
+     "price": 33,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 870,
      "course": "Evergreen",
      "spots": 4,
-     "price": 62,
+     "price": 32,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 880,
-     "course": "City Park",
+     "course": "Wellshire",
      "spots": 2,
      "price": 34,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
@@ -63,17 +61,40 @@
    ],
    "2026-11-15": [
     {
+     "min": 600,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 2,
+     "price": 67,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 690,
+     "course": "Foothills 18",
+     "spots": 2,
+     "price": 89,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
+    },
+    {
+     "min": 710,
+     "course": "Kennedy (West / Babe Lind)",
+     "spots": 2,
+     "price": 67,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
      "min": 850,
      "course": "Evergreen",
      "spots": 2,
      "price": 32,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
+    }
+   ],
+   "2026-11-21": [
     {
-     "min": 880,
+     "min": 720,
      "course": "Foothills 18",
-     "spots": 2,
-     "price": 36,
+     "spots": 4,
+     "price": 89,
      "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     }
    ]
