@@ -1,0 +1,35 @@
+name: clv-watch
+# Closing-line watcher (see clv/README.md). One long run per day of picks: takes each pick's closing price ~8 minutes before
+# the start, scores CLV, grades finished games from ESPN, DMs Bradley only when something stays broken, and posts a weekly
+# summary on Mondays. It looks every 4 minutes while a close is coming up (no API calls unless one is due), sleeps through
+# 10 PM–5 AM, hands over to a fresh run before GitHub's 6-hour limit, and exits when nothing is pending.
+# Started by clv-record.yml; the hourly cron (5:41 AM–9:41 PM Denver) only restarts it if the chain ever stops.
+on:
+  schedule:
+    - cron: '41 12-23,0-4 * * *'
+  workflow_dispatch:
+concurrency: { group: clv-watch, cancel-in-progress: false }
+permissions: { contents: write, actions: write }
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: git config user.name clv-tracker && git config user.email clv-tracker@users.noreply.github.com
+      - name: Watch
+        env:
+          ODDS_API_KEY: '${{ secrets.ODDS_API_KEY }}'
+          GH_TOKEN: '${{ github.token }}'
+        run: node clv/watch.js --loop
+      - name: DM if it failed twice in a row
+        if: failure()
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          prev=$(gh run list -R "$GITHUB_REPOSITORY" -w clv-watch.yml -s completed -L 1 --json conclusion -q '.[0].conclusion' || echo "")
+          if [ "$prev" = "failure" ]; then
+            gh workflow run notify.yml -R "$GITHUB_REPOSITORY" --ref main -f channel=dm \
+              -f text="⚠ **CLV tracker**: the closing-line watcher failed twice in a row, so closes may be missed. https://github.com/$GITHUB_REPOSITORY/actions/workflows/clv-watch.yml"
+          else echo "first failure – the next run (cron or record) retries"; fi

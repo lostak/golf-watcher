@@ -27,3 +27,9 @@ event the My Life app (web, Android, desktop), the Pocket processor and Discord 
 `tick.yml` is a self-chaining heartbeat: each run reads Discord, starts the tee-time check when a day is wanted
 (5 AM–10 PM) and the daily report on the first tick after 7:15 AM, waits out the rest of its 5 minutes, then starts the
 next tick. GitHub's 5-minute cron is unreliable (often hours late), so cron only restarts the chain if it stops.
+
+## Closing-line value tracker
+[`clv/`](clv/README.md) scores betting picks against the closing line for free: `clv-record.yml` takes picks from Claude's
+pick routines, `clv-watch.yml` snapshots the close before each start, grades results from ESPN and DMs only when something
+stays broken. Results: [`clv/REPORT.md`](clv/REPORT.md). Optional secret `ODDS_API_KEY` (The Odds API free tier) adds
+FanDuel, BetMGM, Pinnacle and player props on top of ESPN's DraftKings lines.
