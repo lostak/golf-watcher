@@ -1,0 +1,47 @@
+name: clv-record
+# Records picks for closing-line-value tracking (see clv/README.md). Called by Claude's pick routines, one call per batch:
+#   gh workflow run clv-record.yml -R lostak/golf-watcher --ref main -f source=duet -f picks='[{"league":"nfl","game":"Broncos @ Chiefs","market":"spread","side":"Broncos","line":3.5,"price":-110,"book":"DraftKings","units":1}]'
+# Same pick sent twice is recorded once. Rejected picks DM Bradley (notify.yml, channel=dm). Starts clv-watch afterwards.
+on:
+  workflow_dispatch:
+    inputs:
+      picks: { description: 'JSON array of picks (clv/README.md), or [{"id":"…","result":"win"}] to settle one by hand', required: true, type: string }
+      source: { description: 'Whose picks: duet | life | …', required: false, default: 'duet', type: string }
+      dry: { description: 'Test only: match and price the picks, save nothing, send no DM', type: boolean, default: false }
+concurrency: { group: clv-record, cancel-in-progress: false }
+permissions: { contents: write, actions: write }
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Record picks
+        id: rec
+        env:
+          PICKS: '${{ inputs.picks }}'
+          SOURCE: '${{ inputs.source }}'
+          ODDS_API_KEY: '${{ secrets.ODDS_API_KEY }}'
+          GH_TOKEN: '${{ github.token }}'
+          CLV_DRY: "${{ inputs.dry && '1' || '' }}"
+        run: |
+          set +e; node clv/record.js; rc=$?; set -e
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          # rc 2 = picks rejected (record.js already DMed the reasons); rc 1 = crash
+          if [ "$rc" = "1" ]; then
+            gh workflow run notify.yml -R "$GITHUB_REPOSITORY" --ref main -f channel=dm \
+              -f text="⚠ **CLV tracker**: recording picks crashed. https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" || true
+          fi
+      - name: Save
+        if: ${{ !inputs.dry }}
+        run: |
+          git config user.name clv-tracker && git config user.email clv-tracker@users.noreply.github.com
+          git add clv/data && (git diff --cached --quiet || (git commit -q -m "clv: record picks" && for i in 1 2 3 4; do git pull --rebase -q -X theirs && git push -q && break; sleep $((i*4)); done))
+      - name: Start the closing-line watcher
+        if: ${{ !inputs.dry }}
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: for i in 1 2 3; do gh workflow run clv-watch.yml -R "$GITHUB_REPOSITORY" --ref main && break; sleep $((i*10)); done
+      - if: steps.rec.outputs.rc != '0'
+        run: exit 1
