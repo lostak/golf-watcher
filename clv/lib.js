@@ -251,8 +251,8 @@ function booksFromOddsApi(raw) {
 
 // ---------------------------------------------------------------- ESPN (public, no key)
 const espn = {
-  async board(lg, ymd, ymd2) {   // ymd = YYYY-MM-DD (US Eastern date, which is how ESPN files games)
-    const L = LEAGUES[lg], d = ymd.replace(/-/g, '') + (ymd2 ? '-' + ymd2.replace(/-/g, '') : '');
+  async board(lg, ymd) {   // ymd = YYYY-MM-DD (US Eastern date, which is how ESPN files games)
+    const L = LEAGUES[lg], d = ymd.replace(/-/g, '');
     const url = g => `https://site.api.espn.com/apis/site/v2/sports/${L.espn}/scoreboard?dates=${d}&limit=400${g ? '&groups=' + g : ''}`;
     let j = await (await get(url(L.groups), 'ESPN')).json();
     if (L.groups && !(j.events || []).length) j = await (await get(url(''), 'ESPN')).json();
