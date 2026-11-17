@@ -1,5 +1,6 @@
 name: tick
-# Heartbeat, every ~5 minutes around the clock. Each run: reads new Discord commands in the golf channel, starts the
+# Heartbeat, every ~5 minutes around the clock. Each run: reads new Discord commands in the golf channel, runs the
+# powder-morning check (5–9 AM only), starts the
 # tee-time check when a day is wanted (5 AM–10 PM), starts the daily report on the first tick after 7:15 AM, then
 # waits out the rest of its 5 minutes and starts the next tick. GitHub's own 5-minute cron is unreliable (often hours
 # late), so cron here only restarts the chain if it ever stops.
@@ -40,6 +41,15 @@ jobs:
           GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
           GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
         run: node watchdog.js "lostak/game-price-watcher:tick.yml" || echo "::warning::watchdog failed"
+      - name: Powder morning (one DM + calendar hold on 6"+ snow mornings, 5:30–8:30 AM)
+        env:
+          DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
+          DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
+          GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
+          GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
+        run: |
+          h=$((10#$(TZ=America/Denver date +%H)))
+          if [ "$h" -ge 5 ] && [ "$h" -lt 9 ]; then timeout 150 node powder-morning.js || echo "::warning::powder-morning exited $?"; else echo "powder-morning: not the morning window"; fi
       - name: Save cursor / wants
         run: |
           git config user.name golf-watcher && git config user.email golf-watcher@users.noreply.github.com

@@ -1,0 +1,78 @@
+{
+  "_about": "Powder morning: one Discord DM + a calendar hold when overnight snow at a day-trip Ikon resort crosses the threshold. Edit freely; powder-morning.js reads this every run.",
+  "thresholdInches": 6,
+  "sendFrom": 5.5,
+  "sendUntil": 8.5,
+  "failureReportAt": 8,
+  "season": {
+    "from": "10-15",
+    "to": "05-31"
+  },
+  "hold": {
+    "start": "06:30",
+    "minutes": 360
+  },
+  "origin": "Denver",
+  "resorts": [
+    {
+      "name": "Copper",
+      "lat": 39.487,
+      "lng": -106.15,
+      "drive": "1h30",
+      "route": "I-70",
+      "snotel": [
+        "415:CO:SNTL",
+        "485:CO:SNTL"
+      ],
+      "snowReport": "https://www.coppercolorado.com/the-mountain/conditions-weather/snow-report"
+    },
+    {
+      "name": "A-Basin",
+      "lat": 39.634,
+      "lng": -105.87,
+      "drive": "1h20",
+      "route": "I-70 and US-6",
+      "snotel": [
+        "505:CO:SNTL",
+        "602:CO:SNTL"
+      ],
+      "snowReport": "https://www.arapahoebasin.com/snow-report/"
+    },
+    {
+      "name": "Winter Park",
+      "lat": 39.8736,
+      "lng": -105.7738,
+      "drive": "1h40",
+      "route": "I-70 and US-40 over Berthoud Pass",
+      "snotel": [
+        "335:CO:SNTL",
+        "1186:CO:SNTL"
+      ],
+      "snowReport": "https://www.winterparkresort.com/the-mountain/mountain-report"
+    },
+    {
+      "name": "Eldora",
+      "lat": 39.94,
+      "lng": -105.59,
+      "drive": "1h10",
+      "route": "Boulder and CO-119, no I-70",
+      "snotel": [
+        "564:CO:SNTL",
+        "838:CO:SNTL"
+      ],
+      "snowReport": "https://www.eldora.com/the-mountain/conditions"
+    },
+    {
+      "name": "Steamboat",
+      "lat": 40.445,
+      "lng": -106.77,
+      "drive": "3h",
+      "route": "I-70, CO-9 and US-40 over Rabbit Ears",
+      "snotel": [
+        "709:CO:SNTL",
+        "825:CO:SNTL"
+      ],
+      "snowReport": "https://www.steamboat.com/the-mountain/mountain-report"
+    }
+  ]
+}

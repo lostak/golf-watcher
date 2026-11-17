@@ -1,0 +1,25 @@
+name: powder-morning
+# Manual test of the powder-morning DM (the real check runs inside tick.yml every ~5 minutes, 5:30–8:30 AM Denver).
+# test = simulate a snow day with this many inches at the top resort: sends ONE DM labelled TEST, reads the live snow
+# sources, checks calendar access read-only, writes no state. Set test to 0 for a real check right now with live data
+# — it DMs only if the threshold is met, ignores the time window and writes no state).
+on:
+  push: { branches: [claude/project-thread-s8rv6l], paths: ['.github/workflows/powder-morning.yml'] }   # TEMP: one test run before merge
+  workflow_dispatch:
+    inputs:
+      test: { description: 'Simulated inches at the top resort (0 = real data)', type: string, default: '9' }
+      dry: { description: 'Print the DM instead of sending it', type: boolean, default: false }
+permissions: { contents: read }
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults: { run: { working-directory: golf-watcher } }
+    steps:
+      - uses: actions/checkout@v4
+      - run: node powder-morning.js ${{ inputs.test != '0' && format('--test={0}', inputs.test) || '--force' }} ${{ inputs.dry && '--dry' || '' }}
+        env:
+          DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
+          DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
+          GCAL_SA_KEY: '${{ secrets.GCAL_SA_KEY }}'
+          GCAL_CALENDAR_ID: '${{ secrets.GCAL_CALENDAR_ID }}'
