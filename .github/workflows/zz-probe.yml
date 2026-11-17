@@ -1,0 +1,19 @@
+name: zz-probe (temporary)
+on: { push: { branches: [claude/project-thread-s8rv6l], paths: ['.github/workflows/zz-probe.yml'] } }
+permissions: {}
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - run: |
+          p() { echo "=== $1"; curl -sS -m 20 -A 'powder-morning (github.com/lostak/golf-watcher)' -H 'Accept: application/json' -o out -w "HTTP %{http_code} %{content_type} %{size_download}\n" "$1"; head -c ${2:-600} out; echo; }
+          p "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data?stationTriplets=415:CO:SNTL&elements=SNWD&duration=HOURLY&beginDate=2026-11-16%2000:00&endDate=2026-11-17%2006:00&periodRef=END" 400
+          p "https://api.open-meteo.com/v1/forecast?latitude=39.487&longitude=-106.15&hourly=snowfall&past_days=1&forecast_days=1&timezone=America/Denver" 400
+          p "https://api-511x-co.carsprogram.org/"
+          p "https://api-511x-co.carsprogram.org/events_v1/api/eventMapFeatures?eventClassifications=incidents&eventClassifications=closures"
+          p "https://api-511x-co.carsprogram.org/rest/events"
+          p "https://router.project-osrm.org/route/v1/driving/-104.9903,39.7392;-106.15,39.487?overview=false" 300
+          curl -sS -m 20 -A 'Mozilla/5.0' https://www.cotrip.org/ -o home.html -w "cotrip home %{http_code}\n"
+          grep -oE 'https?://[a-zA-Z0-9.-]*(carsprogram|cotrip)[a-zA-Z0-9./_-]*' home.html | sort -u | head -40
+          for js in $(grep -oE 'src="[^"]+\.js"' home.html | sed 's/src="//;s/"$//' | head -8); do case $js in http*) u=$js;; *) u="https://www.cotrip.org$js";; esac; curl -sS -m 20 "$u" -o b.js; echo "--- $u"; grep -oE '"(https?:)?//[a-zA-Z0-9.-]*carsprogram[^"]*"|"/[a-zA-Z0-9_]+_v[0-9]+/api/[^"]*"|(events|roadReports|travelTimes|eventMapFeatures|signs|cameras)[A-Za-z_]*/api/[A-Za-z/]+' b.js | sort -u | head -40; done
