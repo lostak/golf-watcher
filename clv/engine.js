@@ -9,17 +9,10 @@ async function oddsEvents(lg, h, cache) {
   catch (e) { h.fails.oddsapi = (h.fails.oddsapi || 0) + 1; h.last_oddsapi_error = e.message; L.note(h, 'odds api events: ' + e.message); cache[k] = null; }
   return cache[k];
 }
-async function espnBoard(lg, from, to, h, cache) {   // from/to: Eastern dates YYYY-MM-DD
-  const k = `e:${lg}:${from}:${to || ''}`; if (cache[k]) return cache[k];
-  try { cache[k] = await L.espn.board(lg, from, to); h.fails.espn = 0; }
-  catch (e) {
-    h.fails.espn = (h.fails.espn || 0) + 1; h.last_espn_error = e.message; L.note(h, 'espn: ' + e.message);
-    if (to) {   // a date range failed – fall back to single days
-      const out = []; for (let d = from; d <= to && out.length < 800; d = L.addDays(d, 1)) out.push(...(await espnBoard(lg, d, null, h, cache) || []));
-      return (cache[k] = out);
-    }
-    cache[k] = null;
-  }
+async function espnBoard(lg, day, _unused, h, cache) {   // day: Eastern date YYYY-MM-DD
+  const k = `e:${lg}:${day}`; if (k in cache) return cache[k];
+  try { cache[k] = await L.espn.board(lg, day); h.fails.espn = 0; }
+  catch (e) { h.fails.espn = (h.fails.espn || 0) + 1; h.last_espn_error = e.message; L.note(h, 'espn: ' + e.message); cache[k] = null; }
   return cache[k];
 }
 const etDate = t => L.localDate(t, 'America/New_York');
@@ -33,9 +26,12 @@ async function matchPicks(picks, h, cache = {}) {
     const leagues = p.league ? [p.league] : ['nfl', 'ncaaf', 'nhl', 'nba', 'ncaab'];
     let found = null, ambiguous = false;
     for (const lg of leagues) {
-      let evs = L.KEY ? await oddsEvents(lg, h, cache) : null;
-      if (!evs) { const d0 = etDate(Math.min(posted, Date.now())); evs = await espnBoard(lg, L.addDays(d0, -1), L.addDays(d0, 7), h, cache) || []; }
-      const e = L.bestEvent(p, evs, posted);
+      const evs = L.KEY ? await oddsEvents(lg, h, cache) : null;
+      let e = evs ? L.bestEvent(p, evs, posted) : null;
+      if (!evs) {   // ESPN rejects date ranges: walk day by day (free) and stop at the first day with a match
+        const d0 = etDate(Math.min(posted, Date.now())), seen = [];
+        for (let i = -1; i <= 7 && !e; i++) { seen.push(...(await espnBoard(lg, L.addDays(d0, i), null, h, cache) || [])); if (i >= 0) e = L.bestEvent(p, seen, posted); }
+      }
       if (e?.ambiguous) { ambiguous = true; continue; }
       if (e) { found = { lg, e }; break; }
     }

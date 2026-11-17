@@ -119,6 +119,5 @@ out = run('watch.js');
 check('watch: missed close → DM', () => assert.ok(/missed the closing price/.test(out), out));
 
 fs.rmSync(dir, { recursive: true, force: true });
-try { fs.unlinkSync(path.join(root, 'REPORT.md')); } catch {}
 console.log(failures ? `\n${failures} failed` : '\nall passed');
 process.exit(failures ? 1 : 0);
