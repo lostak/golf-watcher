@@ -1,13 +1,21 @@
 {
  "found": [],
- "wants": [],
- "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock",
+ "wants": [
+  {
+   "date": "2026-11-22",
+   "from": "06:00",
+   "to": "07:30",
+   "players": 4,
+   "source": "calendar"
+  }
+ ],
+ "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock|Kennedy",
  "center": {
   "lat": 39.7294,
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-17T14:17:29.242Z",
+ "updated": "2026-11-17T22:16:49.468Z",
  "report": {
   "date": "2026-11-17",
   "days": {
@@ -105,6 +113,6 @@
    ]
   }
  },
- "checked": "2026-11-15T05:00:03.173Z",
+ "checked": "2026-11-17T22:16:49.467Z",
  "errors": []
 }
