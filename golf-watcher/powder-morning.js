@@ -41,7 +41,7 @@ async function getJSON(url, tries = 2) {
       const r = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'application/json' }, signal: AbortSignal.timeout(20000) });
       if (!r.ok) throw new Error(`${r.status} ${new URL(url).host}`);
       return await r.json();
-    } catch (e) { last = e; if (i + 1 < tries) await new Promise(r => setTimeout(r, 4000)); }
+    } catch (e) { last = e; if (i + 1 < tries) await new Promise(r => setTimeout(r, 4000 * (i + 1))); }
   }
   throw last;
 }
@@ -69,27 +69,35 @@ async function snotel(ids) {
   }
   return out;
 }
-// Open-Meteo modeled snowfall (cm per hour) summed over the last 24 h.
-async function openMeteo(r) {
-  const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${r.lat}&longitude=${r.lng}&hourly=snowfall&past_days=2&forecast_days=1&timezone=UTC`);
-  const t = j.hourly.time, s = j.hourly.snowfall, nowMs = Date.now();
-  let cm = 0, n = 0;
-  for (let i = 0; i < t.length; i++) { const ms = Date.parse(t[i] + ':00Z'); if (ms > nowMs - 24 * 3600e3 && ms <= nowMs) { cm += s[i] || 0; n++; } }
+// Open-Meteo modeled snowfall (cm per hour) summed over the last 24 h; one request for all the resorts that need it.
+const sum24 = h => {
+  const nowMs = Date.now(); let cm = 0, n = 0;
+  for (let i = 0; i < h.time.length; i++) { const ms = Date.parse(h.time[i] + ':00Z'); if (ms > nowMs - 24 * 3600e3 && ms <= nowMs) { cm += h.snowfall[i] || 0; n++; } }
   if (n < 18) throw new Error('Open-Meteo: short series');
   return cm / 2.54;
+};
+async function openMeteo(rs) {
+  const j = await getJSON(`https://api.open-meteo.com/v1/forecast?latitude=${rs.map(r => r.lat).join(',')}&longitude=${rs.map(r => r.lng).join(',')}&hourly=snowfall&past_days=2&forecast_days=1&timezone=UTC`, 3);
+  const arr = Array.isArray(j) ? j : [j];
+  return Object.fromEntries(rs.map((r, i) => [r.name, sum24(arr[i].hourly)]));
 }
 async function readSnow() {
   const errors = [], snow = {};
   let st = {};
   const ids = [...new Set(cfg.resorts.flatMap(r => r.snotel || []))];
-  try { st = await snotel(ids); } catch (e) { errors.push('SNOTEL ' + e.message.slice(0, 60)); }
+  try { st = await snotel(ids); } catch (e) { errors.push('SNOTEL ' + why(e)); }
+  const missing = [];
   for (const r of cfg.resorts) {
     const id = (r.snotel || []).find(i => st[i]);
-    if (id) { snow[r.name] = { inches: st[id].inches, source: 'snotel' }; continue; }
-    try { snow[r.name] = { inches: await openMeteo(r), source: 'model' }; } catch (e) { errors.push(`${r.name} Open-Meteo ${e.message.slice(0, 50)}`); }
+    if (id) snow[r.name] = { inches: st[id].inches, source: 'snotel' }; else missing.push(r);
+  }
+  if (missing.length) {
+    try { for (const [n, inches] of Object.entries(await openMeteo(missing))) snow[n] = { inches, source: 'model' }; }
+    catch (e) { errors.push('Open-Meteo ' + why(e)); }
   }
   return { snow, errors };
 }
+const why = e => `${e.message}${e.cause ? ' (' + (e.cause.code || e.cause.message) + ')' : ''}`.slice(0, 90);
 
 // ---------- delivery ----------
 const TOKEN = one(process.env.DISCORD_BOT_TOKEN), CHANNEL = one(process.env.DISCORD_CHANNEL_ID);
@@ -114,7 +122,7 @@ async function dm(st, text) {
 
 function message(ranked, top, source, test) {
   const lines = ranked.map((x, i) => `${i + 1}. **${x.r.name}** ${Math.round(x.inches)}" · ~${x.r.drive} via ${x.r.route}`);
-  const modeled = ranked.some(x => x.source === 'model');
+  const modeled = ranked.some(x => x.source !== 'snotel');
   return [
     `${test ? '🧪 **TEST, simulated snow day (ignore)** · ' : ''}❄️ **Powder morning: ${top.r.name} ${Math.round(top.inches)}" overnight**`,
     ...lines,
@@ -175,10 +183,10 @@ async function holdMorning(st, top, dmFailed) {
   day.tries++;
   const { snow, errors } = await readSnow();
   if (errors.length) log('source problems: ' + errors.join('; '));
-  if (!Object.keys(snow).length) { day.lastErr = errors.join('; '); save(); log('no snow data this tick, will retry next tick'); process.exitCode = 0; return; }
+  if (!Object.keys(snow).length && TEST == null) { day.lastErr = errors.join('; '); save(); log('no snow data this tick, will retry next tick'); process.exitCode = 0; return; }
   day.ok = true;
 
-  let ranked = cfg.resorts.filter(r => snow[r.name]).map(r => ({ r, ...snow[r.name] })).sort((a, b) => b.inches - a.inches);
+  let ranked = cfg.resorts.filter(r => snow[r.name] || TEST != null).map(r => ({ r, ...(snow[r.name] || { inches: 0, source: 'none' }) })).sort((a, b) => b.inches - a.inches);
   log('new snow: ' + ranked.map(x => `${x.r.name} ${rnd(x.inches)}" (${x.source})`).join(', '));
   if (TEST != null) {  // simulated morning: top resort gets TEST inches, the rest step down, real ordering otherwise kept
     ranked = ranked.map((x, i) => ({ ...x, inches: Math.max(0, TEST - i * 2) }));

@@ -17,7 +17,7 @@ jobs:
     defaults: { run: { working-directory: golf-watcher } }
     steps:
       - uses: actions/checkout@v4
-      - run: node powder-morning.js ${{ inputs.test != '0' && format('--test={0}', inputs.test) || '--force' }} ${{ inputs.dry && '--dry' || '' }}
+      - run: node powder-morning.js ${{ (inputs.test || '9') != '0' && format('--test={0}', inputs.test || '9') || '--force' }} ${{ inputs.dry && '--dry' || '' }}
         env:
           DISCORD_BOT_TOKEN: '${{ secrets.DISCORD_BOT_TOKEN }}'
           DISCORD_CHANNEL_ID: '${{ secrets.DISCORD_CHANNEL_ID }}'
