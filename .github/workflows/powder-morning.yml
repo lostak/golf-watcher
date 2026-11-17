@@ -4,7 +4,6 @@ name: powder-morning
 # sources, checks calendar access read-only, writes no state. Set test to 0 for a real check right now with live data
 # — it DMs only if the threshold is met, ignores the time window and writes no state).
 on:
-  push: { branches: [claude/project-thread-s8rv6l], paths: ['.github/workflows/powder-morning.yml'] }   # TEMP: one test run before merge
   workflow_dispatch:
     inputs:
       test: { description: 'Simulated inches at the top resort (0 = real data)', type: string, default: '9' }
