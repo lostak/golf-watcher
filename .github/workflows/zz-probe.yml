@@ -7,11 +7,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: |
-          p() { echo "=== $1"; curl -sS -m 25 -A 'powder-morning (github.com/lostak/golf-watcher)' -H 'Accept: application/json' -o out -w "HTTP %{http_code} %{content_type} %{size_download}\n" "$1"; head -c ${2:-600} out; echo; }
-          p "https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/data?stationTriplets=415:CO:SNTL&elements=SNWD&duration=HOURLY&beginDate=2026-11-16%2000:00&endDate=2026-11-17%2006:00&periodRef=END" 300
-          p "https://wcc.sc.egov.usda.gov/reportGenerator/view_csv/customSingleStationReport/hourly/415:CO:SNTL%7Cid=%22%22%7Cname/-30,0/SNWD::value" 700
-          p "https://511.cotrip.org/configs/main.json" 3000
-          curl -sS -m 20 https://www.cotrip.org/assets/index-3AUZbUiL.js -o b.js
-          grep -oE '"/[a-zA-Z0-9_]+_v[0-9]+/api/[^"]*"' b.js | sort -u | head -80
-          grep -oE '.{60}graphql.{60}' b.js | head -5
-          grep -oE '.{80}(travelTime|roadCondition|chainLaw|eventMapFeatures|mapFeatures).{80}' b.js | head -12
+          curl -sS -m 20 https://511.cotrip.org/configs/main.json -o main.json
+          jq -c '.layers[] | {name, api, query, collection}' main.json
+          curl -sS -m 25 -A 'powder-morning' 'https://api-511x-co.carsprogram.org/events?eventClassifications=roadClosures' -o ev.json -w "events %{http_code} %{size_download}\n"
+          head -c 1500 ev.json; echo
+          jq -c 'if type=="array" then (length, (.[0]|keys)) else keys end' ev.json || true
+          jq -c '[.[] | select(tostring|test("I-70"))] | length' ev.json || true
+          jq -c '[.[] | select(tostring|test("I-70"))][0]' ev.json | head -c 2500 || true
+          curl -sS -m 25 'https://wcc.sc.egov.usda.gov/awdbRestApi/services/v1/stations?stationTriplets=415:CO:SNTL' -w "\nsnotel stations %{http_code}\n" | head -c 300
