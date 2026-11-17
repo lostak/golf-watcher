@@ -1,10 +1,10 @@
 {
  "days": {
   "2026-11-17": {
-   "tries": 25,
+   "tries": 26,
    "ok": true,
    "best": "Copper 0\"",
-   "lastErr": "Open-Meteo 429 api.open-meteo.com"
+   "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   }
  }
 }
