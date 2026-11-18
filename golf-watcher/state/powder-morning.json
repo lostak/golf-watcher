@@ -7,7 +7,7 @@
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   },
   "2026-11-18": {
-   "tries": 2,
+   "tries": 3,
    "ok": true,
    "best": "Steamboat 2\""
   }
