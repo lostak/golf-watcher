@@ -42,13 +42,13 @@ const SHARP = ['pinnacle', 'lowvig', 'betonlineag'];
 const PROPS = [
   [/anytime\s*(td|touchdown)/, 'player_anytime_td'], [/(1st|first)\s*(td|touchdown)/, 'player_1st_td'],
   [/pass(ing)?\s*(yds|yards)/, 'player_pass_yds'], [/pass(ing)?\s*(tds?|touchdowns?)/, 'player_pass_tds'],
-  [/(completions|comp)/, 'player_pass_completions'], [/(interceptions|ints?)\b/, 'player_pass_interceptions'],
+  [/\b(completions|comp)\b/, 'player_pass_completions'], [/\b(interceptions|ints?)\b/, 'player_pass_interceptions'],
   [/rush(ing)?\s*(yds|yards)/, 'player_rush_yds'], [/rush(ing)?\s*(att|attempts)/, 'player_rush_attempts'],
   [/(rec|receiving|reception)\s*(yds|yards)/, 'player_reception_yds'], [/receptions|catches/, 'player_receptions'],
   [/anytime\s*goal|goal\s*scorer/, 'player_goal_scorer_anytime'], [/shots?(\s*on\s*goal)?|sog/, 'player_shots_on_goal'],
-  [/saves/, 'player_total_saves'], [/pra|points\s*rebounds\s*assists/, 'player_points_rebounds_assists'],
-  [/threes|3pt|3-pointers/, 'player_threes'], [/rebounds|rebs?/, 'player_rebounds'], [/assists|ast/, 'player_assists'],
-  [/goals/, 'player_goals'], [/points|pts/, 'player_points'],
+  [/saves/, 'player_total_saves'], [/\bpra\b|points\s*rebounds\s*assists/, 'player_points_rebounds_assists'],
+  [/threes|3pt|3-pointers/, 'player_threes'], [/\b(rebounds|rebs?)\b/, 'player_rebounds'], [/\b(assists|ast)\b/, 'player_assists'],
+  [/goals/, 'player_goals'], [/\b(points?|pts)\b/, 'player_points'],
 ];
 
 // ---------------------------------------------------------------- odds math
