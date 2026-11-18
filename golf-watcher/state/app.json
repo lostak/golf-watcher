@@ -15,26 +15,45 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-18T14:17:31.130Z",
+ "updated": "2026-11-18T14:17:33.357Z",
  "report": {
-  "date": "2026-11-17",
+  "date": "2026-11-18",
   "days": {
-   "2026-11-17": [
-    {
-     "min": 860,
-     "course": "Willis Case",
-     "spots": 2,
-     "price": 30,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    }
-   ],
    "2026-11-18": [
     {
-     "min": 605,
+     "min": 600,
      "course": "Saddle Rock Golf Course",
      "spots": 2,
      "price": 66,
      "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+18+2026&players=2"
+    },
+    {
+     "min": 610,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 4,
+     "price": 57,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 610,
+     "course": "Kennedy (West / Babe Lind)",
+     "spots": 4,
+     "price": 57,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 650,
+     "course": "Kennedy (Creek 9 only)",
+     "spots": 4,
+     "price": 29,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 650,
+     "course": "Willis Case",
+     "spots": 2,
+     "price": 59,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 670,
@@ -42,46 +61,97 @@
      "spots": 2,
      "price": 59,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
+    }
+   ],
+   "2026-11-19": [
     {
-     "min": 670,
-     "course": "Willis Case",
-     "spots": 2,
-     "price": 58,
+     "min": 610,
+     "course": "Kennedy (West / Babe Lind)",
+     "spots": 4,
+     "price": 57,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 680,
+     "min": 620,
+     "course": "Kennedy (Creek 9 only)",
+     "spots": 4,
+     "price": 29,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 620,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 59,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 620,
+     "course": "Willis Case",
+     "spots": 2,
+     "price": 59,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 640,
      "course": "Foothills 18",
      "spots": 2,
      "price": 79,
      "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     },
     {
-     "min": 850,
-     "course": "City Park",
-     "spots": 2,
-     "price": 29,
+     "min": 650,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 4,
+     "price": 57,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     }
    ],
    "2026-11-21": [
     {
-     "min": 680,
-     "course": "Willis Case",
+     "min": 650,
+     "course": "Kennedy (West / Babe Lind)",
      "spots": 4,
      "price": 67,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 880,
-     "course": "Wellshire",
-     "spots": 4,
-     "price": 33,
+     "min": 660,
+     "course": "City Park",
+     "spots": 2,
+     "price": 66,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 880,
+     "min": 670,
+     "course": "Willis Case",
+     "spots": 4,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 700,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 4,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 700,
+     "course": "Kennedy (Creek 9 only)",
+     "spots": 4,
+     "price": 34,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 860,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 34,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 870,
      "course": "Foothills 18",
      "spots": 4,
      "price": 36,
@@ -90,24 +160,45 @@
    ],
    "2026-11-22": [
     {
-     "min": 690,
-     "course": "Willis Case",
+     "min": 610,
+     "course": "Kennedy (Creek 9 only)",
      "spots": 4,
-     "price": 65,
+     "price": 34,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 720,
+     "min": 630,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 2,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 640,
+     "course": "Kennedy (West / Babe Lind)",
+     "spots": 4,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 670,
      "course": "Foothills 18",
      "spots": 4,
      "price": 89,
      "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     },
     {
-     "min": 850,
+     "min": 690,
+     "course": "Willis Case",
+     "spots": 4,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 870,
      "course": "Wellshire",
-     "spots": 2,
-     "price": 34,
+     "spots": 4,
+     "price": 33,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     }
    ]
