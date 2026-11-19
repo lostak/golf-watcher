@@ -1,6 +1,71 @@
 {
- "found": [],
+ "found": [
+  {
+   "date": "2026-11-19",
+   "min": 870,
+   "course": "Kennedy (Babe Lind / West)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (Babe Lind / West)|870"
+  },
+  {
+   "date": "2026-11-19",
+   "min": 870,
+   "course": "Kennedy (Creek 9 only)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (Creek 9 only)|870"
+  },
+  {
+   "date": "2026-11-19",
+   "min": 870,
+   "course": "Kennedy (West / Babe Lind)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (West / Babe Lind)|870"
+  },
+  {
+   "date": "2026-11-19",
+   "min": 880,
+   "course": "Kennedy (Babe Lind / West)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (Babe Lind / West)|880"
+  },
+  {
+   "date": "2026-11-19",
+   "min": 880,
+   "course": "Kennedy (Creek 9 only)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (Creek 9 only)|880"
+  },
+  {
+   "date": "2026-11-19",
+   "min": 880,
+   "course": "Kennedy (West / Babe Lind)",
+   "spots": 4,
+   "price": 25,
+   "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0",
+   "key": "2026-11-19|Kennedy (West / Babe Lind)|880"
+  }
+ ],
  "wants": [
+  {
+   "date": "2026-11-19",
+   "from": "14:30",
+   "to": "16:00",
+   "players": 2,
+   "courses": [
+    "Kennedy"
+   ],
+   "source": "calendar"
+  },
   {
    "date": "2026-11-22",
    "from": "06:00",
@@ -9,13 +74,13 @@
    "source": "calendar"
   }
  ],
- "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock|Kennedy",
+ "courseFilter": "Evergreen|Willis Case|City Park|Wellshire|Foothills|Saddle Rock|Kennedy|Kennedy",
  "center": {
   "lat": 39.7294,
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-19T19:55:56.744Z",
+ "updated": "2026-11-19T20:01:10.332Z",
  "report": {
   "date": "2026-11-19",
   "days": {
@@ -232,6 +297,6 @@
    ]
   }
  },
- "checked": "2026-11-19T19:55:56.744Z",
+ "checked": "2026-11-19T20:01:10.332Z",
  "errors": []
 }
