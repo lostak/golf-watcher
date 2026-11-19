@@ -15,7 +15,7 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-19T00:39:34.364Z",
+ "updated": "2026-11-19T00:45:12.908Z",
  "report": {
   "date": "2026-11-18",
   "days": {
@@ -204,11 +204,6 @@
    ]
   }
  },
- "checked": "2026-11-19T00:39:34.364Z",
- "errors": [
-  "south-suburban-golf-club",
-  "lone-tree-golf-club-hotel",
-  "littleton-golf-tennis-club",
-  "family-sports-golf-course"
- ]
+ "checked": "2026-11-19T00:45:12.907Z",
+ "errors": []
 }
