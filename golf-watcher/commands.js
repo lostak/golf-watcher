@@ -170,11 +170,15 @@ const sameCourses = (a, b) => (a || []).map(x => x.toLowerCase()).sort().join('|
     // a /slash command: the Cloudflare helper answers Discord with "⏳ `<command>` …"; that reply carries the command text
     const slash = (msg.interaction_metadata || msg.interaction) && /^⏳ `([^`]+)`/.exec(msg.content || '');
     if (!slash && (msg.author?.bot || msg.webhook_id)) continue;
-    const text = (slash ? slash[1] : msg.content || '').replace(/^\/?golf\s+/i, '').trim(); if (!text) continue;
+    // "watch stop all", "golf cancel Sat", "please stop": a leading watch/golf/please is just a lead-in (Nov 19: "watch stop all" wasn't understood
+    // and "watch stop thursday" CREATED a Thursday watch)
+    const text = (slash ? slash[1] : msg.content || '').replace(/^\/?golf\s+/i, '').replace(/^(?:(?:watch|golf|please|pls|ok|okay)[\s,:-]+)+(?=(?:stop|cancel|remove|clear|drop|delete|unwatch|forget|end|kill|quit|nevermind|never mind)\b)/i, '').trim(); if (!text) continue;
     const t = text.toLowerCase();
     console.log('message:', text);
     const dates = parseDates(text), named = parseCourses(text);
-    const isStop = /^(stop|cancel|remove|clear|drop|delete|unwatch|forget|nevermind|never mind|no longer|don'?t watch)\b/.test(t) || /\b(stop|cancel) watching\b/.test(t);
+    const isStop = /^(stop|cancel|remove|clear|drop|delete|unwatch|forget|end|kill|quit|nevermind|never mind|no longer|don'?t watch)\b/.test(t) || /\b(stop|cancel|end|quit) (watching|watches|the watch|it|all|everything)\b/.test(t);
+    // a message that says stop/cancel anywhere is never turned into a NEW watch
+    const mentionsStop = /\b(stop|cancel|unwatch|don'?t watch|no longer)\b/.test(t);
 
     if (/^(help|\?|commands|how)\b/.test(t)) { await reply(HELP); continue; }
     if (/^(list|status|show|what('?s| am i| are you)? ?(being )?watch|watching\??$)/.test(t) || /\bwhat.*\bwatch/.test(t)) {
@@ -186,7 +190,7 @@ const sameCourses = (a, b) => (a || []).map(x => x.toLowerCase()).sort().join('|
 
     if (isStop) {
       const before = JSON.stringify(cfg.wants);
-      if (/\ball\b|everything/.test(t) && !named.length) cfg.wants = [];
+      if ((/\ball\b|everything|watch(es|ing)?$|^(stop|cancel|end|quit)$/.test(t)) && !named.length && !dates.length) cfg.wants = [];
       else if (dates.length && named.length) cfg.wants = cfg.wants.flatMap(w => { if (!dates.includes(w.date)) return [w]; if (!w.courses) return [w]; const left = w.courses.filter(c => !named.some(n => n.toLowerCase() === shortName(c).toLowerCase())); return left.length ? [{ ...w, courses: left }] : []; });
       else if (dates.length) cfg.wants = cfg.wants.filter(w => !dates.includes(w.date));
       else if (named.length) {
@@ -205,6 +209,7 @@ const sameCourses = (a, b) => (a || []).map(x => x.toLowerCase()).sort().join('|
       changed = true; await reply(`Your usual courses: ${general()}.`); continue;
     }
 
+    if (mentionsStop) { await reply('To cancel, say "stop all", "stop Sat", "stop Kennedy" or "stop Kennedy Sat". Nothing changed.'); continue; }
     if (!dates.length) {
       const bits = [named.length && 'at ' + named.join(', '), parseWindow(text) !== ALL_DAY && win(...parseWindow(text)), parsePlayers(text) && 'for ' + parsePlayers(text)].filter(Boolean);
       await reply(bits.length ? `Which day? I got ${bits.join(' ')} – add a day, e.g. "${text} Saturday".` : `I didn't catch that. ${HELP}`);

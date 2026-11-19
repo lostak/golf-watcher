@@ -39,6 +39,34 @@ const CHRONO = cfg.chronogolf || ['south-suburban-golf-club', 'lone-tree-golf-cl
 const FOREUP = cfg.foreup || [];
 const MIN_HOLES = cfg.minHoles || 18;
 
+const nowMinDenver = () => { const [h, m] = new Date().toLocaleTimeString('en-GB', { timeZone: TZ, hour12: false }).split(':').map(Number); return (h % 24) * 60 + m; };
+const normCourse = n => n.replace(/\(([^)]*\/[^)]*)\)/, (_, inner) => '(' + inner.split('/').map(x => x.trim()).sort().join(' / ') + ')');
+function dedupeTimes(list, today, nowMin, lead = 20) {
+  const best = {};
+  for (const f0 of list) {
+    if (f0.date < today || (f0.date === today && f0.min < nowMin + lead)) continue;
+    const f = { ...f0, course: normCourse(f0.course) }; f.key = `${f.date}|${f.course}|${f.min}`;
+    if (!best[f.key] || (f.spots || 0) > (best[f.key].spots || 0)) best[f.key] = f;
+  }
+  return Object.values(best);
+}
+// the alert: one line per course per day ("Kennedy (Babe Lind / West): 2:30, 2:40, 3:10 PM · $25–51 · book"), newest days first in time order
+function alertText(matches, niceDate, fmt) {
+  const groups = {};
+  for (const m of matches) (groups[m.date + '|' + m.course] ||= []).push(m);
+  const rows = Object.values(groups).sort((a, b) => a[0].date.localeCompare(b[0].date) || a[0].min - b[0].min);
+  const short = c => c.replace(/ Golf (Course|Club)( - Colorado)?| \(Colorado\)/g, '');
+  let msg = `🚨 *TEE TIME OPEN – BOOK NOW*`, day = '';
+  for (const g of rows.slice(0, 10)) {
+    if (g[0].date !== day) { day = g[0].date; msg += `\n*${niceDate(day)}*`; }
+    const times = g.sort((a, b) => a.min - b.min).map(m => fmt(m.min));
+    const prices = g.map(m => m.price).filter(p => p != null), lo = Math.min(...prices), hi = Math.max(...prices);
+    msg += `\n• ${short(g[0].course)}: ${times.slice(0, 6).join(', ')}${times.length > 6 ? ` +${times.length - 6} more` : ''}` +
+      `${prices.length ? ` · $${lo}${hi > lo ? '–' + hi : ''}` : ''} · [book](<${g[0].link}>)`;
+  }
+  if (rows.length > 10) msg += `\n…and ${rows.length - 10} more course-days (see the Golf tab in My Life).`;
+  return msg + `\nSay "stop all" or "stop ${niceDate(rows[0][0].date).split(',')[0]}" here to stop these alerts.`;
+}
 const todayDenver = () => new Date().toLocaleDateString('en-CA', { timeZone: TZ });
 const hm = s => { const [h, m] = s.split(':').map(Number); return h * 60 + m; };
 const fmt = m => { const h = Math.floor(m / 60), mm = String(m % 60).padStart(2, '0'); return `${((h + 11) % 12) + 1}:${mm} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -309,6 +337,9 @@ async function launch() {
   log(`Chronogolf: ${chronoOk.length}/${CHRONO.length} clubs read (${chronoOk.join(', ')})`);
   for (const s of FOREUP) { try { all = all.concat(await readForeUp(browser, s, dates)); } catch (e) { errors.push(`${s.label}: ${e.message.slice(0, 100)}`); } }
   await browser.close();
+  // one row per real tee time: "Kennedy (Babe Lind / West)" and "Kennedy (West / Babe Lind)" are the same start (keep the most spots),
+  // and nothing that has already teed off – today needs at least 20 minutes to get there (Nov 19: alerts listed 10:20 AM at 1:19 PM)
+  all = dedupeTimes(all.filter(f => wanted(f.course)), today, nowMinDenver());
 
   if (REPORT) {
     // Daily report: per day, the earliest daylight tee time at each course (2+ spots), sorted by time.
@@ -351,20 +382,14 @@ async function launch() {
 
   if (matches.length && !DRY) {
     const top = matches[0];
-    const line = m => `${niceDate(m.date)} ${fmt(m.min)} – ${m.course} – ${m.spots} spots${m.price != null ? ' – $' + m.price : ''}`;
-    let msg = `🚨 *TEE TIME OPEN – BOOK NOW*\n*${line(top)}*\n${top.link}`;
-    for (const m of matches.slice(1, MAX_LINES)) msg += `\n${line(m)} – book: ${m.link}`;
-    if (matches.length > MAX_LINES) {
-      const byDate = {}; for (const m of matches.slice(MAX_LINES)) byDate[m.date] = (byDate[m.date] || 0) + 1;
-      msg += `\n…and ${matches.length - MAX_LINES} more: ` + Object.entries(byDate).map(([d, n]) => `${niceDate(d)} ${n} more – https://www.golfnow.com/tee-times/search#facilitytype=GolfCourse&date=${gnDate(d)}&longitude=${CENTER.lng}&latitude=${CENTER.lat}&radius=${RADIUS}&players=${playersByDate[d]}`).join('; ');
-    }
-    msg += `\nBook directly on the course's site. Pick the date on the page.`;
-    await notify(msg);
+    await notify(alertText(matches, niceDate, fmt));
     for (const m of matches) seen[m.key] = Date.now();
     if (golfEv) {                                                      // alert events + FOUND lines, so the app's Golf tab and the morning brief see them
       try {
-        for (const m of matches.slice(0, 5)) await gcal.insert({ summary: `Personal: tee time open – ${m.course} ${niceDate(m.date)} ${fmt(m.min)}`, when: gcal.nextQuarter(),
-          description: `Book here: ${m.link}\n${m.course}\n${niceDate(m.date)} ${fmt(m.min)} – ${m.spots} open spots${m.price != null ? ' – $' + m.price : ''}\nTee times go fast – book directly on the course's site, then tap 'I booked it' in the Golf tab of My Life.` });
+        // ONE alert event per batch (was up to 5); the earliest time leads, the rest are listed
+        const m = top, rest = matches.slice(1, 8).map(x => `${niceDate(x.date)} ${fmt(x.min)} – ${x.course} – ${x.spots} spots${x.price != null ? ' – $' + x.price : ''}`);
+        await gcal.insert({ summary: `Personal: tee time open – ${m.course} ${niceDate(m.date)} ${fmt(m.min)}${matches.length > 1 ? ` (+${matches.length - 1} more)` : ''}`, when: gcal.nextQuarter(),
+          description: `Book here: ${m.link}\n${m.course}\n${niceDate(m.date)} ${fmt(m.min)} – ${m.spots} open spots${m.price != null ? ' – $' + m.price : ''}${rest.length ? '\nAlso open:\n' + rest.join('\n') : ''}\nTee times go fast – book directly on the course's site, then tap 'I booked it' in the Golf tab of My Life.` });
       } catch (e) { log('Calendar alert events failed: ' + e.message.slice(0, 120)); }
     }
   }

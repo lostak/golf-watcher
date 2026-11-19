@@ -5,6 +5,6 @@
     "lng": -104.8319
   },
   "radiusMiles": 40,
-  "exclude": "Par 3|Par-3|Footgolf|Back Nine|Front Nine|Back 9|Front 9|9 Hole|Executive",
+  "exclude": "Par 3|Par-3|Footgolf|Back Nine|Front Nine|Back 9|Front 9|9 Hole|Executive|9 only|Creek 9",
   "wants": []
 }
