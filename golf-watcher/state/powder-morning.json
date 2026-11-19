@@ -11,6 +11,11 @@
    "ok": true,
    "best": "Steamboat 1\"",
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
+  },
+  "2026-11-19": {
+   "tries": 1,
+   "ok": true,
+   "best": "Copper 0\""
   }
  }
 }
