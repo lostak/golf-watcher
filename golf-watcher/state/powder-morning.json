@@ -19,9 +19,9 @@
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   },
   "2026-11-20": {
-   "tries": 14,
+   "tries": 15,
    "ok": true,
-   "best": "Steamboat 0\"",
+   "best": "Copper 0\"",
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   }
  }
