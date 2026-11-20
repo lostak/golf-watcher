@@ -7,146 +7,60 @@
   "lng": -104.8319
  },
  "radiusMiles": 40,
- "updated": "2026-11-19T20:26:11.753Z",
+ "updated": "2026-11-20T14:21:28.422Z",
  "report": {
-  "date": "2026-11-19",
+  "date": "2026-11-20",
   "days": {
-   "2026-11-19": [
-    {
-     "min": 610,
-     "course": "Kennedy (West / Babe Lind)",
-     "spots": 2,
-     "price": 56,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
+   "2026-11-20": [
     {
      "min": 620,
-     "course": "Kennedy (Creek 9 only)",
-     "spots": 2,
-     "price": 29,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 620,
-     "course": "Wellshire",
-     "spots": 4,
-     "price": 59,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 620,
-     "course": "Willis Case",
-     "spots": 3,
-     "price": 59,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 650,
      "course": "Kennedy (Babe Lind / West)",
-     "spots": 4,
-     "price": 56,
+     "spots": 2,
+     "price": 57,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 660,
-     "course": "Foothills 18",
-     "spots": 4,
-     "price": 79,
-     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
-    },
-    {
-     "min": 690,
-     "course": "City Park",
-     "spots": 4,
-     "price": 58,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    }
-   ],
-   "2026-11-20": [
-    {
-     "min": 600,
-     "course": "Saddle Rock Golf Course",
-     "spots": 2,
-     "price": 77,
-     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+20+2026&players=2"
-    },
-    {
-     "min": 620,
-     "course": "Kennedy (Babe Lind / West)",
-     "spots": 4,
-     "price": 56,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 620,
-     "course": "Kennedy (Creek 9 only)",
-     "spots": 2,
-     "price": 29,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 620,
-     "course": "Kennedy (West / Babe Lind)",
-     "spots": 4,
-     "price": 56,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 630,
      "course": "Willis Case",
-     "spots": 4,
+     "spots": 2,
      "price": 59,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 670,
-     "course": "Wellshire",
-     "spots": 2,
-     "price": 60,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 860,
-     "course": "City Park",
-     "spots": 2,
-     "price": 29,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+     "min": 680,
+     "course": "Foothills 18",
+     "spots": 4,
+     "price": 89,
+     "link": "https://app.membersports.com/tee-times/3697/4758/0/3/0"
     }
    ],
    "2026-11-21": [
     {
      "min": 600,
-     "course": "Kennedy (Babe Lind / West)",
-     "spots": 2,
-     "price": 67,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 600,
-     "course": "Kennedy (West / Babe Lind)",
-     "spots": 4,
-     "price": 67,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 605,
      "course": "Saddle Rock Golf Course",
      "spots": 2,
      "price": 77,
      "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+21+2026&players=2"
     },
     {
-     "min": 610,
-     "course": "Wellshire",
-     "spots": 2,
-     "price": 67,
+     "min": 600,
+     "course": "Kennedy (Babe Lind / West)",
+     "spots": 4,
+     "price": 66,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 630,
-     "course": "Kennedy (Creek 9 only)",
-     "spots": 3,
-     "price": 35,
+     "min": 600,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 66,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 620,
+     "course": "City Park",
+     "spots": 2,
+     "price": 66,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
@@ -157,14 +71,7 @@
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
-     "min": 660,
-     "course": "City Park",
-     "spots": 2,
-     "price": 67,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 710,
+     "min": 700,
      "course": "Foothills 18",
      "spots": 4,
      "price": 89,
@@ -173,44 +80,37 @@
    ],
    "2026-11-22": [
     {
-     "min": 600,
-     "course": "Willis Case",
+     "min": 610,
+     "course": "Saddle Rock Golf Course",
      "spots": 2,
-     "price": 67,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+     "price": 77,
+     "link": "https://www.golfnow.com/tee-times/facility/17877-saddle-rock-golf-course/search#date=Nov+22+2026&players=2"
     },
     {
      "min": 610,
-     "course": "Kennedy (Creek 9 only)",
+     "course": "Kennedy (Babe Lind / West)",
      "spots": 4,
-     "price": 34,
+     "price": 65,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 610,
-     "course": "Kennedy (West / Babe Lind)",
-     "spots": 2,
-     "price": 66,
+     "course": "Wellshire",
+     "spots": 4,
+     "price": 65,
+     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
+    },
+    {
+     "min": 610,
+     "course": "Willis Case",
+     "spots": 4,
+     "price": 65,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
     {
      "min": 620,
-     "course": "Kennedy (Babe Lind / West)",
-     "spots": 4,
-     "price": 66,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 630,
-     "course": "Wellshire",
-     "spots": 4,
-     "price": 66,
-     "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
-    },
-    {
-     "min": 640,
      "course": "City Park",
-     "spots": 2,
+     "spots": 4,
      "price": 67,
      "link": "https://app.membersports.com/tee-times/3629/20573/1/1/0"
     },
