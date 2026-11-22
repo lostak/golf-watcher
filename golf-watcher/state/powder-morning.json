@@ -30,7 +30,7 @@
    "best": "Steamboat 3\""
   },
   "2026-11-22": {
-   "tries": 7,
+   "tries": 8,
    "ok": true,
    "best": "Winter Park 0.5\"",
    "lastErr": "SNOTEL fetch failed (UND_ERR_CONNECT_TIMEOUT); Open-Meteo 429 api.open-meteo.com"
