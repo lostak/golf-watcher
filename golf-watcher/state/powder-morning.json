@@ -30,9 +30,9 @@
    "best": "Steamboat 3\""
   },
   "2026-11-22": {
-   "tries": 29,
+   "tries": 30,
    "ok": true,
-   "best": "Steamboat 1\"",
+   "best": "Winter Park 0.2\"",
    "lastErr": "SNOTEL 403 wcc.sc.egov.usda.gov; Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   }
  }
