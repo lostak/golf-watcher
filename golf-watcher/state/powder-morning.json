@@ -30,10 +30,10 @@
    "best": "Steamboat 3\""
   },
   "2026-11-22": {
-   "tries": 18,
+   "tries": 19,
    "ok": true,
    "best": "Steamboat 1\"",
-   "lastErr": "SNOTEL fetch failed (UND_ERR_CONNECT_TIMEOUT); Open-Meteo 429 api.open-meteo.com"
+   "lastErr": "SNOTEL 403 wcc.sc.egov.usda.gov; Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   }
  }
 }
