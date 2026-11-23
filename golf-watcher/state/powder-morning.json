@@ -36,7 +36,7 @@
    "lastErr": "SNOTEL 403 wcc.sc.egov.usda.gov; Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   },
   "2026-11-23": {
-   "tries": 6,
+   "tries": 7,
    "ok": true,
    "best": "Copper 0\"",
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
