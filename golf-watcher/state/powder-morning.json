@@ -34,6 +34,11 @@
    "ok": true,
    "best": "Steamboat 2\"",
    "lastErr": "SNOTEL 403 wcc.sc.egov.usda.gov; Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
+  },
+  "2026-11-23": {
+   "tries": 1,
+   "ok": true,
+   "best": "Copper 0\""
   }
  }
 }
