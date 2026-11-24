@@ -42,9 +42,10 @@
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   },
   "2026-11-24": {
-   "tries": 8,
+   "tries": 9,
    "ok": true,
-   "best": "Winter Park 0.1\""
+   "best": "Winter Park 0.1\"",
+   "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
   }
  }
 }
