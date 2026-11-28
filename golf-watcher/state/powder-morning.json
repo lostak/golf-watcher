@@ -1,11 +1,5 @@
 {
  "days": {
-  "2026-11-17": {
-   "tries": 35,
-   "ok": true,
-   "best": "Copper 0\"",
-   "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
-  },
   "2026-11-18": {
    "tries": 35,
    "ok": true,
@@ -64,6 +58,18 @@
    "ok": true,
    "best": "Steamboat 0\"",
    "lastErr": "Open-Meteo fetch failed (UND_ERR_CONNECT_TIMEOUT)"
+  },
+  "2026-11-28": {
+   "tries": 1,
+   "ok": true,
+   "top": {
+    "name": "Steamboat",
+    "inches": 7
+   },
+   "sent": "Steamboat 7\" at 5:30 AM",
+   "cal": "held"
   }
- }
+ },
+ "lastText": "❄️ Powder morning: Steamboat 7\" overnight\n1. Steamboat 7\" · ~3h via I-70, CO-9 and US-40 over Rabbit Ears\n2. Copper 0\" · ~1h30 via I-70\n3. Winter Park 0\" · ~1h40 via I-70 and US-40 over Berthoud Pass\n4. A-Basin 0\" · ~1h20 via I-70 and US-6\n5. Eldora 0\" · ~1h10 via Boulder and CO-119, no I-70\nI-70 and passes right now: https://www.cotrip.org/\nSteamboat snow report: https://www.steamboat.com/the-mountain/mountain-report\n_New snow in the last 24 h at the nearest SNOTEL snow stake; some resorts from a weather model because the stake data was unavailable. Drive times are typical dry-road times from Denver._",
+ "dmId": "1569395492771860602"
 }
